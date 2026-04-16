@@ -6,10 +6,45 @@
 - SQLAlchemy 2.0
 - Alembic (migrations)
 - SQLite
+- python-vlc (audio playback)
+- mutagen (metadata extraction)
+- python-multipart (file uploads)
 
 ## Endpoints
 
 - `GET /health` - Health check
+
+### Library (`/library`)
+- `POST /library/folders` - Add folder path
+- `GET /library/folders` - List all folders
+- `DELETE /library/folders/{folder_id}` - Remove folder
+- `POST /library/scan` - Scan folders for audio files
+- `GET /library/tracks` - List tracks with optional search filters
+
+### Player (`/player`)
+- `POST /player/play` - Play track by ID
+- `POST /player/pause` - Pause playback
+- `POST /player/resume` - Resume playback
+- `POST /player/stop` - Stop playback
+- `POST /player/seek` - Seek to position
+- `POST /player/next` - Play next track
+- `POST /player/previous` - Play previous track
+- `POST /player/volume` - Set volume
+- `GET /player/status` - Get playback status
+
+### Playlists (`/playlists`)
+- `POST /playlists` - Create playlist
+- `GET /playlists` - List all playlists
+- `GET /playlists/{playlist_id}` - Get playlist with tracks
+- `DELETE /playlists/{playlist_id}` - Delete playlist
+- `POST /playlists/{playlist_id}/tracks` - Add track to playlist
+- `DELETE /playlists/{playlist_id}/tracks/{track_id}` - Remove track
+- `PATCH /playlists/{playlist_id}/reorder` - Reorder tracks
+
+### Metadata (`/metadata`)
+- `GET /metadata/{track_id}` - Get track metadata with album art
+- `PATCH /metadata/{track_id}/image` - Upload custom image
+- `PATCH /metadata/{track_id}` - Update track info
 
 ## Database Models
 
@@ -25,6 +60,14 @@
 - Run `uv run alembic revision --autogenerate -m "message"` to create new migration
 
 ## Changelog
+
+### Stage 2
+- Library router: folder management, recursive audio scanning with mutagen metadata extraction (.mp3, .flac, .wav, .ogg, .m4a)
+- Player router: VLC singleton MediaPlayer with full playback control
+- Playlists router: CRUD operations with track ordering
+- Metadata router: track metadata with base64 album art, custom image uploads to backend/assets/images/
+- Added python-multipart for file uploads
+- All routers registered with API prefixes: /library, /player, /playlists, /metadata
 
 ### Stage 1
 - Initial database setup with SQLite (rrmp.db)

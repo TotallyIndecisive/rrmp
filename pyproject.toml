@@ -8,6 +8,7 @@ dependencies = [
     "alembic>=1.18.4",
     "fastapi>=0.136.0",
     "mutagen>=1.47.0",
+    "python-multipart>=0.0.26",
     "python-vlc>=3.0.21203",
     "pywebview>=6.2.1",
     "sqlalchemy>=2.0.49",

@@ -12,6 +12,7 @@ A retro-themed media player for music collections.
 
 - Python 3.10+
 - uv (package manager)
+- VLC system libraries (for audio playback)
 
 ## Setup
 
@@ -20,6 +21,14 @@ A retro-themed media player for music collections.
 - `uv run python run.py`
 
 ## Changelog
+
+### Stage 2
+- Library router: folder management and recursive audio scanning with mutagen metadata extraction
+- Player router: VLC-based playback control (play, pause, resume, stop, seek, next, previous, volume)
+- Playlists router: full CRUD with track ordering support
+- Metadata router: track info retrieval with embedded album art, custom image upload
+- Pydantic schemas for all request/response models
+- 21 API endpoints total
 
 ### Stage 1
 - Project initialization with FastAPI backend
