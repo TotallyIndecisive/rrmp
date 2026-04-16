@@ -4,6 +4,7 @@ A retro-themed media player for music collections.
 
 ## Tech Stack
 
+- **Frontend**: Vue 3, Vite, Tailwind CSS, Pinia, axios, vuedraggable
 - **Backend**: Python, FastAPI, SQLAlchemy, Alembic
 - **Database**: SQLite
 - **Audio**: python-vlc, mutagen
@@ -11,16 +12,32 @@ A retro-themed media player for music collections.
 ## Prerequisites
 
 - Python 3.10+
+- Node.js 18+
 - uv (package manager)
+- npm (package manager)
 - VLC system libraries (for audio playback)
 
 ## Setup
 
+### Backend
 - `uv sync`
 - `uv run alembic upgrade head`
 - `uv run python run.py`
 
+### Frontend
+- `cd frontend && npm install`
+- `npm run dev`
+
 ## Changelog
+
+### Stage 3
+- Vue 3 + Vite frontend setup with Tailwind CSS retro theme
+- Retro color palette: amber, cream, brown, dark tones
+- Pinia stores for player state and library management
+- Components: NowPlaying (cassette visualization), PlayerControls, Library, Playlist, FolderManager
+- API service layer with axios
+- Three-column layout: Library | NowPlaying | Playlist
+- Vite dev server with proxy to backend
 
 ### Stage 2
 - Library router: folder management and recursive audio scanning with mutagen metadata extraction

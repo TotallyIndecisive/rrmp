@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+@theme {
+  --color-retro-amber: #F5A623;
+  --color-retro-cream: #F5F0E8;
+  --color-retro-brown: #3E2723;
+  --color-retro-dark: #1C1009;
+  --color-retro-warm: #8D6E63;
+  --font-family-retro: 'Space Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Space Mono', monospace;
+  background-color: #1C1009;
+  color: #F5F0E8;
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.btn-retro {
+  padding: 0.5rem 1rem;
+  background-color: #3E2723;
+  color: #F5F0E8;
+  border-radius: 0.25rem;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.btn-retro:hover {
+  background-color: #F5A623;
+  color: #1C1009;
+}
+
+.btn-icon {
+  padding: 0.5rem;
+  border-radius: 9999px;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background-color: #8D6E63;
+  color: #F5F0E8;
+}
+
+.input-retro {
+  padding: 0.5rem 0.75rem;
+  background-color: #3E2723;
+  border: 1px solid #8D6E63;
+  color: #F5F0E8;
+  border-radius: 0.25rem;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.875rem;
+}
+
+.input-retro:focus {
+  outline: none;
+  border-color: #F5A623;
+}
+
+.scrollbar-retro {
+  scrollbar-width: thin;
+  scrollbar-color: #8D6E63 #3E2723;
+}
+
+.scrollbar-retro::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-retro::-webkit-scrollbar-track {
+  background: #3E2723;
+}
+
+.scrollbar-retro::-webkit-scrollbar-thumb {
+  background: #8D6E63;
+  border-radius: 4px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-slow {
+  animation: spin-slow 2s linear infinite;
+}
+
+.font-retro {
+  font-family: 'Space Mono', monospace;
+}
+
+.text-retro-amber {
+  color: #F5A623;
+}
+
+.text-retro-cream {
+  color: #F5F0E8;
+}
+
+.text-retro-brown {
+  color: #3E2723;
+}
+
+.text-retro-dark {
+  color: #1C1009;
+}
+
+.text-retro-warm {
+  color: #8D6E63;
+}
+
+.bg-retro-amber {
+  background-color: #F5A623;
+}
+
+.bg-retro-cream {
+  background-color: #F5F0E8;
+}
+
+.bg-retro-brown {
+  background-color: #3E2723;
+}
+
+.bg-retro-dark {
+  background-color: #1C1009;
+}
+
+.bg-retro-warm {
+  background-color: #8D6E63;
+}
+
+.border-retro-amber {
+  border-color: #F5A623;
+}
+
+.border-retro-brown {
+  border-color: #3E2723;
+}
