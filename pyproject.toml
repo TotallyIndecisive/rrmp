@@ -1,0 +1,15 @@
+[project]
+name = "rrmp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.18.4",
+    "fastapi>=0.136.0",
+    "mutagen>=1.47.0",
+    "python-vlc>=3.0.21203",
+    "pywebview>=6.2.1",
+    "sqlalchemy>=2.0.49",
+    "uvicorn>=0.44.0",
+]
