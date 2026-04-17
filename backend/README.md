@@ -61,6 +61,11 @@
 
 ## Changelog
 
+### Stage 4
+- CORS middleware: allows http://localhost:5173 with all methods/headers
+- Static file serving: serves frontend/dist at root, SPA fallback for non-API routes
+- FastAPI serves both API and built frontend from single port
+
 ### Stage 2
 - Library router: folder management, recursive audio scanning with mutagen metadata extraction (.mp3, .flac, .wav, .ogg, .m4a)
 - Player router: VLC singleton MediaPlayer with full playback control

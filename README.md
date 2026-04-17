@@ -30,6 +30,13 @@ A retro-themed media player for music collections.
 
 ## Changelog
 
+### Stage 4
+- Backend: CORS middleware for http://localhost:5173, static file serving from frontend/dist
+- Frontend build: Production build with `npm run build`, served by FastAPI at root
+- Standalone: `run.py` launches uvicorn in background thread, waits for /health, opens pywebview (falls back to browser)
+- Error handling: try/catch on all API calls, toast notifications for errors and success events
+- Metadata editing: track title/artist/album editing, custom image upload
+
 ### Stage 3
 - Vue 3 + Vite frontend setup with Tailwind CSS retro theme
 - Retro color palette: amber, cream, brown, dark tones

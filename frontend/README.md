@@ -72,6 +72,15 @@ src/
 
 ## Changelog
 
+### Stage 4
+- Toast notification system: amber background, brown text, Space Mono font
+- Error handling: try/catch wrapped on all API calls
+- Success notifications: scan complete, playlist created, track added
+- Metadata editing: title, artist, album fields editable
+- Custom image upload: file input that updates track artwork
+- Debounced search: 300ms delay on library search
+- Queue management: click track sets full track list as queue
+
 ### Stage 3
 - Initial Vue 3 frontend setup
 - Retro cassette-themed UI with Tailwind CSS

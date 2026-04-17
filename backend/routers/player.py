@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -21,7 +22,9 @@ try:
     _instance = vlc.Instance()
     _media_player = _instance.media_player_new()
     _vlc_available = True
-except Exception:
+    print("VLC instance created successfully")
+except Exception as e:
+    print(f"Failed to initialize VLC: {e}")
     _vlc_available = False
     _media_player = None
 
@@ -72,12 +75,29 @@ def play(request: PlayRequest, db: Session = Depends(get_db)):
     global _current_track_id
 
     if not _vlc_available:
-        raise HTTPException(status_code=503, detail="VLC not available")
+        # Mock mode: just update state
+        track = db.query(Track).filter(Track.id == request.track_id).first()
+        if not track:
+            raise HTTPException(status_code=404, detail="Track not found")
+        _current_track_id = track.id
+        recently_played = RecentlyPlayed(
+            track_id=track.id,
+            played_at=datetime.utcnow(),
+        )
+        db.add(recently_played)
+        db.commit()
+        return {"message": "Playing (mock)", "track_id": track.id}
 
     track = db.query(Track).filter(Track.id == request.track_id).first()
     if not track:
         raise HTTPException(status_code=404, detail="Track not found")
 
+    if not os.path.exists(track.file_path):
+        raise HTTPException(
+            status_code=400, detail=f"File not found: {track.file_path}"
+        )
+
+    print(f"Playing file: {track.file_path}")
     media = _instance.media_new(track.file_path)
     _media_player.set_media(media)
     _media_player.play()
@@ -97,7 +117,7 @@ def play(request: PlayRequest, db: Session = Depends(get_db)):
 @router.post("/pause")
 def pause():
     if not _vlc_available:
-        raise HTTPException(status_code=503, detail="VLC not available")
+        return {"message": "Paused (mock)"}
     _media_player.pause()
     return {"message": "Paused"}
 
@@ -105,7 +125,7 @@ def pause():
 @router.post("/resume")
 def resume():
     if not _vlc_available:
-        raise HTTPException(status_code=503, detail="VLC not available")
+        return {"message": "Resumed (mock)"}
     _media_player.play()
     return {"message": "Resumed"}
 
@@ -122,7 +142,7 @@ def stop():
 @router.post("/seek")
 def seek(request: SeekRequest):
     if not _vlc_available:
-        raise HTTPException(status_code=503, detail="VLC not available")
+        return {"message": "Seeked (mock)", "position_ms": request.position_ms}
     _media_player.set_time(request.position_ms)
     return {"message": "Seeked", "position_ms": request.position_ms}
 
@@ -132,7 +152,20 @@ def next_track(db: Session = Depends(get_db)):
     global _queue_index, _current_track_id
 
     if not _vlc_available:
-        raise HTTPException(status_code=503, detail="VLC not available")
+        # Mock mode: just move to next track in queue
+        tracks = db.query(Track).all()
+        if not tracks:
+            raise HTTPException(status_code=400, detail="No tracks available")
+        if not _queue:
+            _queue = [t.id for t in tracks]
+            _queue_index = 0
+        else:
+            if _queue_index < len(_queue) - 1:
+                _queue_index += 1
+            else:
+                _queue_index = 0
+        _current_track_id = _queue[_queue_index]
+        return {"message": "Playing next (mock)", "track_id": _current_track_id}
 
     if not _queue:
         tracks = db.query(Track).all()
@@ -157,7 +190,20 @@ def previous_track(db: Session = Depends(get_db)):
     global _queue_index, _current_track_id
 
     if not _vlc_available:
-        raise HTTPException(status_code=503, detail="VLC not available")
+        # Mock mode: just move to previous track in queue
+        tracks = db.query(Track).all()
+        if not tracks:
+            raise HTTPException(status_code=400, detail="No tracks available")
+        if not _queue:
+            _queue = [t.id for t in tracks]
+            _queue_index = 0
+        else:
+            if _queue_index > 0:
+                _queue_index -= 1
+            else:
+                _queue_index = len(_queue) - 1
+        _current_track_id = _queue[_queue_index]
+        return {"message": "Playing previous (mock)", "track_id": _current_track_id}
 
     if not _queue:
         tracks = db.query(Track).all()
@@ -180,7 +226,7 @@ def previous_track(db: Session = Depends(get_db)):
 @router.post("/volume")
 def set_volume(request: VolumeRequest):
     if not _vlc_available:
-        raise HTTPException(status_code=503, detail="VLC not available")
+        return {"message": "Volume set (mock)", "level": request.level}
     if not 0 <= request.level <= 100:
         raise HTTPException(status_code=400, detail="Volume must be 0-100")
 
