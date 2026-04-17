@@ -70,7 +70,33 @@ src/
 - Scan library button
 - Displays scan results
 
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `Space` | Toggle play/pause |
+| `ArrowRight` | Seek forward 10 seconds |
+| `ArrowLeft` | Seek backward 10 seconds |
+| `ArrowUp` | Volume up 10% |
+| `ArrowDown` | Volume down 10% |
+| `N` | Next track |
+| `P` | Previous track |
+| `S` | Toggle shuffle |
+| `R` | Cycle repeat (off → one → all → off) |
+| `M` | Mute/unmute toggle |
+
 ## Changelog
+
+### Keyboard Shortcuts
+- Global keyboard shortcut listeners on document
+- Space toggles play/pause
+- Arrow keys for seek and volume
+- N/P for next/previous track
+- S toggle shuffle, R cycle repeat
+- M mute/unmute
+- Prevent default browser behavior for all shortcuts
+- Retro toast notifications showing action triggered (+10s, -10s, Shuffle ON, etc.)
+- Listeners removed on component unmount
 
 ### Shuffle/Repeat
 - Added shuffle button: toggles random playback mode, POST /player/shuffle, visual state from poll
