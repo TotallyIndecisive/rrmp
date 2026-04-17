@@ -44,11 +44,14 @@ export const usePlayerStore = defineStore('player', {
 
     async playTrack(track) {
       try {
-        await playerApi.play(track.id)
+        console.log('player.js: Calling playerApi.play with track_id:', track.id)
+        const response = await playerApi.play(track.id)
+        console.log('player.js: API response:', response.data)
         this.setTrack(track)
         this.setPlaying(true)
+        console.log('player.js: Track set, isPlaying:', this.isPlaying)
       } catch (error) {
-        console.error('Failed to play track:', error)
+        console.error('player.js: Failed to play track:', error)
       }
     },
 

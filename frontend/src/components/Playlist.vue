@@ -150,12 +150,14 @@ async function togglePlaylist(playlistId) {
 }
 
 async function fetchPlaylistTracks(playlistId) {
+  console.log('Playlist.vue: Fetching tracks for playlist_id:', playlistId)
   loadingPlaylist.value = true
   try {
     const response = await playlistsApi.getOne(playlistId)
+    console.log('Playlist.vue: Got tracks:', response.data.tracks)
     playlistTracks.value[playlistId] = response.data.tracks
   } catch (error) {
-    console.error('Failed to fetch playlist tracks:', error)
+    console.error('Playlist.vue: Failed to fetch playlist tracks:', error)
   } finally {
     loadingPlaylist.value = false
   }

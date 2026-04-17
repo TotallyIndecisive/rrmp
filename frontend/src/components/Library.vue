@@ -147,7 +147,10 @@ function isCurrentTrack(track) {
 }
 
 async function playTrack(track) {
+  console.log('Library.vue: Clicked track_id:', track.id)
+  console.log('Library.vue: Calling playerApi.play with track_id:', track.id)
   await playerStore.playTrack(track)
+  console.log('Library.vue: Player store updated, currentTrack:', playerStore.currentTrack)
 }
 
 function formatDuration(seconds) {
@@ -164,12 +167,14 @@ function showAddToPlaylist(track) {
 
 async function addToPlaylist(playlistId) {
   if (!selectedTrack.value) return
+  console.log('Library.vue: Adding track_id:', selectedTrack.value.id, 'to playlist_id:', playlistId)
   try {
-    await playlistsApi.addTrack(playlistId, selectedTrack.value.id)
+    const response = await playlistsApi.addTrack(playlistId, selectedTrack.value.id)
+    console.log('Library.vue: Add track response:', response.data)
     showPlaylistModal.value = false
     selectedTrack.value = null
   } catch (error) {
-    console.error('Failed to add track to playlist:', error)
+    console.error('Library.vue: Failed to add track to playlist:', error)
   }
 }
 </script>
