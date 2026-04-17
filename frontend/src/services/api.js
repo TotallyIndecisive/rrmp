@@ -25,6 +25,8 @@ export const player = {
   previous: () => api.post('/player/previous'),
   setVolume: (level) => api.post('/player/volume', { level }),
   getStatus: () => api.get('/player/status'),
+  toggleShuffle: () => api.post('/player/shuffle'),
+  cycleRepeat: () => api.post('/player/repeat'),
 }
 
 export const playlists = {

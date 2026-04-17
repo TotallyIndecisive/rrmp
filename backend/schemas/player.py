@@ -8,6 +8,8 @@ class PlayerStatusResponse(BaseModel):
     position_ms: int = 0
     duration_ms: int = 0
     volume: int = 100
+    shuffle: bool = False
+    repeat: str = "off"
 
 
 class PlayRequest(BaseModel):

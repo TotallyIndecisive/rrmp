@@ -1,5 +1,6 @@
 import os
 import sys
+import random
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -24,7 +25,6 @@ try:
 
     test_instance = vlc.Instance()
     test_player = test_instance.media_player_new()
-    # If we get here, VLC actually works
     _instance = test_instance
     _media_player = test_player
     _vlc_available = True
@@ -37,6 +37,8 @@ except Exception as e:
 _current_track_id: Optional[int] = None
 _queue: list = []
 _queue_index: int = -1
+_shuffle: bool = False
+_repeat: str = "off"
 
 
 def get_db():
@@ -73,6 +75,8 @@ def get_status():
         position_ms=get_position_ms(),
         duration_ms=get_duration_ms(),
         volume=_media_player.audio_get_volume() if _media_player else 100,
+        shuffle=_shuffle,
+        repeat=_repeat,
     )
 
 
@@ -145,22 +149,62 @@ def seek(request: SeekRequest):
     return {"message": "Seeked", "position_ms": request.position_ms}
 
 
+@router.post("/shuffle")
+def toggle_shuffle():
+    global _shuffle
+    _shuffle = not _shuffle
+    return {"message": f"Shuffle {'on' if _shuffle else 'off'}", "shuffle": _shuffle}
+
+
+@router.post("/repeat")
+def cycle_repeat():
+    global _repeat
+    if _repeat == "off":
+        _repeat = "one"
+    elif _repeat == "one":
+        _repeat = "all"
+    else:
+        _repeat = "off"
+    return {"message": f"Repeat: {_repeat}", "repeat": _repeat}
+
+
 @router.post("/next")
 def next_track(db: Session = Depends(get_db)):
     global _queue_index, _current_track_id, _queue
 
-    # Ensure queue is populated
     if not _queue:
         tracks = db.query(Track).all()
         _queue = [t.id for t in tracks]
         _queue_index = 0
 
-    if _queue_index < len(_queue) - 1:
-        _queue_index += 1
-    else:
-        _queue_index = 0  # Loop back to start
+    # Handle repeat: one - replay same track
+    if _repeat == "one":
+        track_id = _current_track_id if _current_track_id else _queue[0]
+        track = db.query(Track).filter(Track.id == track_id).first()
+        if _vlc_available and track and os.path.exists(track.file_path):
+            media = _instance.media_new(track.file_path)
+            _media_player.set_media(media)
+            _media_player.play()
+        _current_track_id = track_id
+        return {"message": "Playing (repeat one)", "track_id": track_id}
 
-    track_id = _queue[_queue_index]
+    # Handle shuffle - choose random
+    if _shuffle:
+        available_tracks = [t for t in _queue if t != _current_track_id]
+        if not available_tracks:
+            available_tracks = _queue
+        track_id = random.choice(available_tracks)
+        _queue_index = _queue.index(track_id)
+    else:
+        # Normal next - handle repeat all or linear
+        if _queue_index < len(_queue) - 1:
+            _queue_index += 1
+        elif _repeat == "all":
+            _queue_index = 0  # Loop back to start
+        else:
+            return {"message": "End of queue", "track_id": _current_track_id}
+        track_id = _queue[_queue_index]
+
     track = db.query(Track).filter(Track.id == track_id).first()
 
     if _vlc_available and track and os.path.exists(track.file_path):
@@ -176,18 +220,39 @@ def next_track(db: Session = Depends(get_db)):
 def previous_track(db: Session = Depends(get_db)):
     global _queue_index, _current_track_id, _queue
 
-    # Ensure queue is populated
     if not _queue:
         tracks = db.query(Track).all()
         _queue = [t.id for t in tracks]
         _queue_index = 0
 
-    if _queue_index > 0:
-        _queue_index -= 1
-    else:
-        _queue_index = len(_queue) - 1  # Loop to end
+    # Handle repeat: one - replay same track
+    if _repeat == "one":
+        track_id = _current_track_id if _current_track_id else _queue[0]
+        track = db.query(Track).filter(Track.id == track_id).first()
+        if _vlc_available and track and os.path.exists(track.file_path):
+            media = _instance.media_new(track.file_path)
+            _media_player.set_media(media)
+            _media_player.play()
+        _current_track_id = track_id
+        return {"message": "Playing (repeat one)", "track_id": track_id}
 
-    track_id = _queue[_queue_index]
+    # Handle shuffle - choose random
+    if _shuffle:
+        available_tracks = [t for t in _queue if t != _current_track_id]
+        if not available_tracks:
+            available_tracks = _queue
+        track_id = random.choice(available_tracks)
+        _queue_index = _queue.index(track_id)
+    else:
+        # Normal previous - handle wrap
+        if _queue_index > 0:
+            _queue_index -= 1
+        elif _repeat == "all":
+            _queue_index = len(_queue) - 1  # Loop to end
+        else:
+            _queue_index = 0
+        track_id = _queue[_queue_index]
+
     track = db.query(Track).filter(Track.id == track_id).first()
 
     if _vlc_available and track and os.path.exists(track.file_path):

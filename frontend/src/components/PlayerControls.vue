@@ -56,6 +56,25 @@
             class="volume-slider w-full accent-retro-amber"
           />
         </div>
+
+        <div class="flex items-center gap-2">
+          <button @click="toggleShuffle" class="btn-icon text-retro-warm hover:text-retro-amber" :class="{ 'text-retro-amber': shuffle }">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
+            </svg>
+          </button>
+          <button @click="cycleRepeat" class="btn-icon text-retro-warm hover:text-retro-amber" :class="{ 'text-retro-amber': repeat !== 'off' }">
+            <svg v-if="repeat === 'off'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
+            </svg>
+            <svg v-else-if="repeat === 'one'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm4-2v-3h-3V9h3V6h2v3h3v2h-3v3h-2z"/>
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -71,6 +90,8 @@ const positionMs = ref(0)
 const durationMs = ref(0)
 const isPlaying = ref(false)
 const volume = ref(100)
+const shuffle = ref(false)
+const repeat = ref('off')
 
 let pollInterval = null
 
@@ -84,6 +105,8 @@ onMounted(() => {
   durationMs.value = playerStore.durationMs
   isPlaying.value = playerStore.isPlaying
   volume.value = playerStore.volume
+  shuffle.value = playerStore.shuffle
+  repeat.value = playerStore.repeat
 
   pollInterval = setInterval(async () => {
     await playerStore.fetchStatus()
@@ -91,6 +114,8 @@ onMounted(() => {
     durationMs.value = playerStore.durationMs
     isPlaying.value = playerStore.isPlaying
     volume.value = playerStore.volume
+    shuffle.value = playerStore.shuffle
+    repeat.value = playerStore.repeat
   }, 1000)
 })
 
@@ -134,6 +159,14 @@ function seek(event) {
 
 function setVolume(event) {
   playerStore.setVolume(parseInt(event.target.value))
+}
+
+function toggleShuffle() {
+  playerStore.toggleShuffle()
+}
+
+function cycleRepeat() {
+  playerStore.cycleRepeat()
 }
 </script>
 

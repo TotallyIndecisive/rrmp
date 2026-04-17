@@ -10,6 +10,8 @@ export const usePlayerStore = defineStore('player', {
     volume: 100,
     queue: [],
     queueIndex: -1,
+    shuffle: false,
+    repeat: 'off',
   }),
 
   actions: {
@@ -35,6 +37,8 @@ export const usePlayerStore = defineStore('player', {
       this.positionMs = status.position_ms
       this.durationMs = status.duration_ms
       this.volume = status.volume
+      this.shuffle = status.shuffle
+      this.repeat = status.repeat
     },
 
     setQueue(queue, index = 0) {
@@ -148,6 +152,24 @@ export const usePlayerStore = defineStore('player', {
         this.updateStatus(response.data)
       } catch (error) {
         console.error('Failed to fetch status:', error)
+      }
+    },
+
+    async toggleShuffle() {
+      try {
+        const response = await playerApi.toggleShuffle()
+        this.shuffle = response.data.shuffle
+      } catch (error) {
+        console.error('Failed to toggle shuffle:', error)
+      }
+    },
+
+    async cycleRepeat() {
+      try {
+        const response = await playerApi.cycleRepeat()
+        this.repeat = response.data.repeat
+      } catch (error) {
+        console.error('Failed to cycle repeat:', error)
       }
     },
   },
