@@ -30,6 +30,15 @@ A retro-themed media player for music collections.
 
 ## Changelog
 
+### Stage 5 Fixes
+- Fix add track to playlist: confirmed backend schema and frontend payload match, API working correctly
+- Fix NowPlaying not updating on next/previous: player store now fetches full track info after next/previous calls and updates currentTrack reactively
+
+### Stage 5
+- Production build: `npm run build` creates optimized frontend in frontend/dist/
+- Standalone app: `uv run python run.py` starts server + opens native window (fallback to browser if pywebview unavailable)
+- Full integration: All frontend and backend fully connected via FastAPI static file serving
+
 ### Stage 4
 - Backend: CORS middleware for http://localhost:5173, static file serving from frontend/dist
 - Frontend build: Production build with `npm run build`, served by FastAPI at root

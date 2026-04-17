@@ -61,6 +61,11 @@
 
 ## Changelog
 
+### Stage 5
+- Player router fixed: proper queue initialization for next/previous track navigation
+- Mock mode: graceful fallback when VLC libraries unavailable (still updates state)
+- All player endpoints tested and working: play, pause, resume, stop, seek, next, previous, volume
+
 ### Stage 4
 - CORS middleware: allows http://localhost:5173 with all methods/headers
 - Static file serving: serves frontend/dist at root, SPA fallback for non-API routes

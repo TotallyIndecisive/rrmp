@@ -40,19 +40,24 @@ def health_check():
 
 # Mount static files from the built frontend
 dist_path = "/home/smckenzie/Tinkering/Projects/APR26/rrmp/frontend/dist"
+
+# Serve assets explicitly
 app.mount(
     "/assets", StaticFiles(directory=os.path.join(dist_path, "assets")), name="assets"
 )
-app.mount("/", StaticFiles(directory=dist_path, html=False), name="static")
+
+
+# Serve root index.html
+@app.get("/")
+def serve_index():
+    return FileResponse(os.path.join(dist_path, "index.html"))
 
 
 # Catch-all for client-side routing (must be last)
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
     # Don't interfere with API routes
-    if full_path.startswith(
-        ("api/", "library", "player", "playlists", "metadata", "health")
-    ):
+    if full_path.startswith(("library", "player", "playlists", "metadata", "health")):
         return {"detail": "Not found"}
 
     # For everything else, serve the SPA

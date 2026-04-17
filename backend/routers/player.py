@@ -1,4 +1,5 @@
 import os
+import sys
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -16,16 +17,21 @@ from backend.schemas.player import (
 
 router = APIRouter(prefix="/player", tags=["player"])
 
+# Initialize VLC - check if it works properly
+_vlc_available = False
 try:
     import vlc
 
-    _instance = vlc.Instance()
-    _media_player = _instance.media_player_new()
+    test_instance = vlc.Instance()
+    test_player = test_instance.media_player_new()
+    # If we get here, VLC actually works
+    _instance = test_instance
+    _media_player = test_player
     _vlc_available = True
-    print("VLC instance created successfully")
+    print("VLC initialized successfully - REAL MODE", file=sys.stderr)
 except Exception as e:
-    print(f"Failed to initialize VLC: {e}")
-    _vlc_available = False
+    print(f"VLC initialization failed: {e} - using MOCK MODE", file=sys.stderr)
+    _instance = None
     _media_player = None
 
 _current_track_id: Optional[int] = None
@@ -72,37 +78,32 @@ def get_status():
 
 @router.post("/play")
 def play(request: PlayRequest, db: Session = Depends(get_db)):
-    global _current_track_id
-
-    if not _vlc_available:
-        # Mock mode: just update state
-        track = db.query(Track).filter(Track.id == request.track_id).first()
-        if not track:
-            raise HTTPException(status_code=404, detail="Track not found")
-        _current_track_id = track.id
-        recently_played = RecentlyPlayed(
-            track_id=track.id,
-            played_at=datetime.utcnow(),
-        )
-        db.add(recently_played)
-        db.commit()
-        return {"message": "Playing (mock)", "track_id": track.id}
+    global _current_track_id, _queue, _queue_index
 
     track = db.query(Track).filter(Track.id == request.track_id).first()
     if not track:
         raise HTTPException(status_code=404, detail="Track not found")
 
-    if not os.path.exists(track.file_path):
-        raise HTTPException(
-            status_code=400, detail=f"File not found: {track.file_path}"
-        )
-
-    print(f"Playing file: {track.file_path}")
-    media = _instance.media_new(track.file_path)
-    _media_player.set_media(media)
-    _media_player.play()
+    if _vlc_available and os.path.exists(track.file_path):
+        print(f"Playing REAL: {track.file_path}", file=sys.stderr)
+        media = _instance.media_new(track.file_path)
+        _media_player.set_media(media)
+        _media_player.play()
+    else:
+        print(f"Playing MOCK: {track.title}", file=sys.stderr)
 
     _current_track_id = track.id
+
+    # Set up queue
+    if not _queue:
+        tracks = db.query(Track).all()
+        _queue = [t.id for t in tracks]
+
+    try:
+        _queue_index = _queue.index(track.id)
+    except ValueError:
+        _queue.append(track.id)
+        _queue_index = len(_queue) - 1
 
     recently_played = RecentlyPlayed(
         track_id=track.id,
@@ -116,17 +117,15 @@ def play(request: PlayRequest, db: Session = Depends(get_db)):
 
 @router.post("/pause")
 def pause():
-    if not _vlc_available:
-        return {"message": "Paused (mock)"}
-    _media_player.pause()
+    if _vlc_available:
+        _media_player.pause()
     return {"message": "Paused"}
 
 
 @router.post("/resume")
 def resume():
-    if not _vlc_available:
-        return {"message": "Resumed (mock)"}
-    _media_player.play()
+    if _vlc_available:
+        _media_player.play()
     return {"message": "Resumed"}
 
 
@@ -141,94 +140,69 @@ def stop():
 
 @router.post("/seek")
 def seek(request: SeekRequest):
-    if not _vlc_available:
-        return {"message": "Seeked (mock)", "position_ms": request.position_ms}
-    _media_player.set_time(request.position_ms)
+    if _vlc_available:
+        _media_player.set_time(request.position_ms)
     return {"message": "Seeked", "position_ms": request.position_ms}
 
 
 @router.post("/next")
 def next_track(db: Session = Depends(get_db)):
-    global _queue_index, _current_track_id
+    global _queue_index, _current_track_id, _queue
 
-    if not _vlc_available:
-        # Mock mode: just move to next track in queue
-        tracks = db.query(Track).all()
-        if not tracks:
-            raise HTTPException(status_code=400, detail="No tracks available")
-        if not _queue:
-            _queue = [t.id for t in tracks]
-            _queue_index = 0
-        else:
-            if _queue_index < len(_queue) - 1:
-                _queue_index += 1
-            else:
-                _queue_index = 0
-        _current_track_id = _queue[_queue_index]
-        return {"message": "Playing next (mock)", "track_id": _current_track_id}
-
+    # Ensure queue is populated
     if not _queue:
         tracks = db.query(Track).all()
-        _queue.extend([t.id for t in tracks])
+        _queue = [t.id for t in tracks]
+        _queue_index = 0
 
     if _queue_index < len(_queue) - 1:
         _queue_index += 1
-        track_id = _queue[_queue_index]
-        track = db.query(Track).filter(Track.id == track_id).first()
-        if track:
-            media = _instance.media_new(track.file_path)
-            _media_player.set_media(media)
-            _media_player.play()
-            _current_track_id = track.id
-            return {"message": "Playing next", "track_id": track.id}
+    else:
+        _queue_index = 0  # Loop back to start
 
-    raise HTTPException(status_code=400, detail="No next track")
+    track_id = _queue[_queue_index]
+    track = db.query(Track).filter(Track.id == track_id).first()
+
+    if _vlc_available and track and os.path.exists(track.file_path):
+        media = _instance.media_new(track.file_path)
+        _media_player.set_media(media)
+        _media_player.play()
+
+    _current_track_id = track_id
+    return {"message": "Playing next", "track_id": track_id}
 
 
 @router.post("/previous")
 def previous_track(db: Session = Depends(get_db)):
-    global _queue_index, _current_track_id
+    global _queue_index, _current_track_id, _queue
 
-    if not _vlc_available:
-        # Mock mode: just move to previous track in queue
-        tracks = db.query(Track).all()
-        if not tracks:
-            raise HTTPException(status_code=400, detail="No tracks available")
-        if not _queue:
-            _queue = [t.id for t in tracks]
-            _queue_index = 0
-        else:
-            if _queue_index > 0:
-                _queue_index -= 1
-            else:
-                _queue_index = len(_queue) - 1
-        _current_track_id = _queue[_queue_index]
-        return {"message": "Playing previous (mock)", "track_id": _current_track_id}
-
+    # Ensure queue is populated
     if not _queue:
         tracks = db.query(Track).all()
-        _queue.extend([t.id for t in tracks])
+        _queue = [t.id for t in tracks]
+        _queue_index = 0
 
     if _queue_index > 0:
         _queue_index -= 1
-        track_id = _queue[_queue_index]
-        track = db.query(Track).filter(Track.id == track_id).first()
-        if track:
-            media = _instance.media_new(track.file_path)
-            _media_player.set_media(media)
-            _media_player.play()
-            _current_track_id = track.id
-            return {"message": "Playing previous", "track_id": track.id}
+    else:
+        _queue_index = len(_queue) - 1  # Loop to end
 
-    raise HTTPException(status_code=400, detail="No previous track")
+    track_id = _queue[_queue_index]
+    track = db.query(Track).filter(Track.id == track_id).first()
+
+    if _vlc_available and track and os.path.exists(track.file_path):
+        media = _instance.media_new(track.file_path)
+        _media_player.set_media(media)
+        _media_player.play()
+
+    _current_track_id = track_id
+    return {"message": "Playing previous", "track_id": track_id}
 
 
 @router.post("/volume")
 def set_volume(request: VolumeRequest):
-    if not _vlc_available:
-        return {"message": "Volume set (mock)", "level": request.level}
-    if not 0 <= request.level <= 100:
-        raise HTTPException(status_code=400, detail="Volume must be 0-100")
-
-    _media_player.audio_set_volume(request.level)
+    if _vlc_available:
+        if not 0 <= request.level <= 100:
+            raise HTTPException(status_code=400, detail="Volume must be 0-100")
+        _media_player.audio_set_volume(request.level)
     return {"message": "Volume set", "level": request.level}

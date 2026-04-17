@@ -8,3 +8,23 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Database
+rrmp.db
+
+# Frontend
+frontend/dist/
+frontend/node_modules/
+
+# Environment
+.env
+.env.local
+.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

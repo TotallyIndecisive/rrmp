@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { player as playerApi } from '../services/api'
+import { player as playerApi, library } from '../services/api'
 
 export const usePlayerStore = defineStore('player', {
   state: () => ({
@@ -95,23 +95,41 @@ export const usePlayerStore = defineStore('player', {
 
     async nextTrack() {
       try {
+        console.log('player.js: Calling playerApi.next()')
         const response = await playerApi.next()
+        console.log('player.js: Next response:', response.data)
         if (response.data.track_id) {
           this.queueIndex = Math.min(this.queueIndex + 1, this.queue.length - 1)
+          // Fetch the full track info and update currentTrack
+          const trackResponse = await library.getTracks()
+          const track = trackResponse.data.find(t => t.id === response.data.track_id)
+          if (track) {
+            this.setTrack(track)
+            this.setPlaying(true)
+          }
         }
       } catch (error) {
-        console.error('Failed to play next:', error)
+        console.error('player.js: Failed to play next:', error)
       }
     },
 
     async previousTrack() {
       try {
+        console.log('player.js: Calling playerApi.previous()')
         const response = await playerApi.previous()
+        console.log('player.js: Previous response:', response.data)
         if (response.data.track_id) {
           this.queueIndex = Math.max(this.queueIndex - 1, 0)
+          // Fetch the full track info and update currentTrack
+          const trackResponse = await library.getTracks()
+          const track = trackResponse.data.find(t => t.id === response.data.track_id)
+          if (track) {
+            this.setTrack(track)
+            this.setPlaying(true)
+          }
         }
       } catch (error) {
-        console.error('Failed to play previous:', error)
+        console.error('player.js: Failed to play previous:', error)
       }
     },
 

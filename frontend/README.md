@@ -72,6 +72,15 @@ src/
 
 ## Changelog
 
+### Stage 5 Fixes
+- Fixed NowPlaying not updating on next/previous: player store now fetches full track info (title, artist, album) via library.getTracks() after next/previous API calls and updates currentTrack reactively so NowPlaying display updates immediately
+- Added console logging to track add to playlist flow for debugging
+
+### Stage 5
+- Build verification: `npm run build` completes successfully
+- API proxy: requests to `/api/*` forwarded to backend (via vite.config.js)
+- Full integration: All components communicate with backend via axios
+
 ### Stage 4
 - Toast notification system: amber background, brown text, Space Mono font
 - Error handling: try/catch wrapped on all API calls
