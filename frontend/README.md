@@ -72,6 +72,14 @@ src/
 
 ## Changelog
 
+### Shuffle/Repeat
+- Added shuffle button: toggles random playback mode, POST /player/shuffle, visual state from poll
+- Added repeat button: cycles off → one → all → off, POST /player/repeat, visual indicators (amber when active, "1" for one)
+- Added shuffle/repeat fields to player store state and updateStatus action
+- Added toggleShuffle() and cycleRepeat() actions to player store
+- Added toggleShuffle/cycleRepeat to API service
+- Retro-styled buttons matching cassette theme
+
 ### Stage 5 Fixes
 - Fixed NowPlaying not updating on next/previous: player store now fetches full track info (title, artist, album) via library.getTracks() after next/previous API calls and updates currentTrack reactively so NowPlaying display updates immediately
 - Added console logging to track add to playlist flow for debugging
