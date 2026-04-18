@@ -14,6 +14,7 @@ from backend.schemas.player import (
     PlayRequest,
     SeekRequest,
     VolumeRequest,
+    QueueRequest,
 )
 
 router = APIRouter(prefix="/player", tags=["player"])
@@ -33,12 +34,17 @@ except Exception as e:
     print(f"VLC initialization failed: {e} - using MOCK MODE", file=sys.stderr)
     _instance = None
     _media_player = None
+    _event_manager = None
 
 _current_track_id: Optional[int] = None
 _queue: list = []
 _queue_index: int = -1
 _shuffle: bool = False
 _repeat: str = "off"
+_folder_queue: list = []
+_folder_queue_index: int = -1
+_played_folder_tracks: set = set()
+_queue_active: bool = False
 
 
 def get_db():
@@ -47,6 +53,94 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def on_track_end(event, db=None):
+    global _current_track_id, _queue_index, _queue_active, _folder_queue_index, _played_folder_tracks
+    print("Track ended, determining next track...", file=sys.stderr)
+    
+    if db is None:
+        db = SessionLocal()
+    
+    if _queue_active and _queue_index < len(_queue) - 1:
+        _queue_index += 1
+        track_id = _queue[_queue_index]
+    elif _queue_active and _queue_index >= len(_queue) - 1:
+        _queue_active = False
+        _queue_index = -1
+        _played_folder_tracks.add(_current_track_id)
+        
+        if not _folder_queue:
+            tracks = db.query(Track).all()
+            _folder_queue = [t.id for t in tracks]
+            _folder_queue_index = _folder_queue.index(_current_track_id) if _current_track_id in _folder_queue else -1
+        
+        available = [t for t in _folder_queue if t not in _played_folder_tracks]
+        if available:
+            if _shuffle:
+                track_id = random.choice(available)
+            else:
+                current_pos = _folder_queue.index(_current_track_id) if _current_track_id in _folder_queue else -1
+                for t in _folder_queue[current_pos+1:]:
+                    if t not in _played_folder_tracks:
+                        track_id = t
+                        break
+                else:
+                    track_id = available[0]
+            _folder_queue_index = _folder_queue.index(track_id)
+        else:
+            if _repeat == "all":
+                _played_folder_tracks.clear()
+                _folder_queue_index = 0
+                track_id = _folder_queue[0]
+            else:
+                return
+    else:
+        _played_folder_tracks.add(_current_track_id)
+        
+        if not _folder_queue:
+            tracks = db.query(Track).all()
+            _folder_queue = [t.id for t in tracks]
+        
+        available = [t for t in _folder_queue if t not in _played_folder_tracks]
+        if available:
+            if _shuffle:
+                track_id = random.choice(available)
+            else:
+                current_pos = _folder_queue.index(_current_track_id) if _current_track_id in _folder_queue else -1
+                for t in _folder_queue[current_pos+1:]:
+                    if t not in _played_folder_tracks:
+                        track_id = t
+                        break
+                else:
+                    track_id = available[0]
+            _folder_queue_index = _folder_queue.index(track_id)
+        else:
+            if _repeat == "all":
+                _played_folder_tracks.clear()
+                _folder_queue_index = 0
+                track_id = _folder_queue[0]
+            else:
+                return
+    
+    track = db.query(Track).filter(Track.id == track_id).first()
+    if track and _vlc_available and os.path.exists(track.file_path):
+        media = _instance.media_new(track.file_path)
+        _media_player.set_media(media)
+        _media_player.play()
+    
+    _current_track_id = track_id
+    print(f"Autoplay: {track_id}", file=sys.stderr)
+
+
+# Attach autoplay event
+if _vlc_available:
+    try:
+        _event_manager = _media_player.event_manager()
+        _event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, on_track_end)
+        print("Autoplay event attached", file=sys.stderr)
+    except Exception as e:
+        print(f"Failed to attach autoplay event: {e}", file=sys.stderr)
 
 
 def get_position_ms() -> int:
@@ -77,6 +171,7 @@ def get_status():
         volume=_media_player.audio_get_volume() if _media_player else 100,
         shuffle=_shuffle,
         repeat=_repeat,
+        queue_active=_queue_active,
     )
 
 
@@ -170,98 +265,149 @@ def cycle_repeat():
 
 @router.post("/next")
 def next_track(db: Session = Depends(get_db)):
-    global _queue_index, _current_track_id, _queue
+    global _queue_index, _current_track_id, _queue, _queue_active, _folder_queue, _folder_queue_index, _played_folder_tracks
 
-    if not _queue:
-        tracks = db.query(Track).all()
-        _queue = [t.id for t in tracks]
-        _queue_index = 0
-
-    # Handle repeat: one - replay same track
     if _repeat == "one":
-        track_id = _current_track_id if _current_track_id else _queue[0]
+        track_id = _current_track_id if _current_track_id else _queue[0] if _queue else None
+        if track_id:
+            track = db.query(Track).filter(Track.id == track_id).first()
+            if _vlc_available and track and os.path.exists(track.file_path):
+                media = _instance.media_new(track.file_path)
+                _media_player.set_media(media)
+                _media_player.play()
+            _current_track_id = track_id
+        return {"message": "Playing (repeat one)", "track_id": track_id}
+
+    # Priority 1: Queue is active and has unplayed tracks
+    if _queue_active and _queue and _queue_index < len(_queue) - 1:
+        if _shuffle:
+            available = [t for t in _queue[_queue_index+1:] if t != _current_track_id]
+            if not available:
+                available = list(_queue)
+            track_id = random.choice(available)
+        else:
+            _queue_index += 1
+            track_id = _queue[_queue_index]
+        
         track = db.query(Track).filter(Track.id == track_id).first()
         if _vlc_available and track and os.path.exists(track.file_path):
             media = _instance.media_new(track.file_path)
             _media_player.set_media(media)
             _media_player.play()
         _current_track_id = track_id
-        return {"message": "Playing (repeat one)", "track_id": track_id}
+        return {"message": "Playing next from queue", "track_id": track_id, "queue_active": True}
 
-    # Handle shuffle - choose random
-    if _shuffle:
-        available_tracks = [t for t in _queue if t != _current_track_id]
-        if not available_tracks:
-            available_tracks = _queue
-        track_id = random.choice(available_tracks)
-        _queue_index = _queue.index(track_id)
-    else:
-        # Normal next - handle repeat all or linear
-        if _queue_index < len(_queue) - 1:
-            _queue_index += 1
-        elif _repeat == "all":
-            _queue_index = 0  # Loop back to start
+    # Queue exhausted - fall back to folder
+    _queue_active = False
+    _queue_index = -1
+    
+    if not _folder_queue:
+        tracks = db.query(Track).all()
+        _folder_queue = [t.id for t in tracks]
+
+    # Add current track to played if not already
+    if _current_track_id:
+        _played_folder_tracks.add(_current_track_id)
+
+    # Find next unplayed folder track
+    available = [t for t in _folder_queue if t not in _played_folder_tracks]
+    
+    if available:
+        if _shuffle:
+            track_id = random.choice(available)
         else:
-            return {"message": "End of queue", "track_id": _current_track_id}
-        track_id = _queue[_queue_index]
-
-    track = db.query(Track).filter(Track.id == track_id).first()
-
-    if _vlc_available and track and os.path.exists(track.file_path):
-        media = _instance.media_new(track.file_path)
-        _media_player.set_media(media)
-        _media_player.play()
-
-    _current_track_id = track_id
-    return {"message": "Playing next", "track_id": track_id}
+            # Find next after current position
+            current_pos = _folder_queue.index(_current_track_id) if _current_track_id in _folder_queue else -1
+            track_id = None
+            for t in _folder_queue[current_pos+1:]:
+                if t not in _played_folder_tracks:
+                    track_id = t
+                    break
+            if not track_id:
+                track_id = available[0]
+        
+        _folder_queue_index = _folder_queue.index(track_id)
+        track = db.query(Track).filter(Track.id == track_id).first()
+        if _vlc_available and track and os.path.exists(track.file_path):
+            media = _instance.media_new(track.file_path)
+            _media_player.set_media(media)
+            _media_player.play()
+        _current_track_id = track_id
+        return {"message": "Playing next from folder", "track_id": track_id, "queue_active": False}
+    else:
+        # No more unplayed tracks
+        if _repeat == "all":
+            _played_folder_tracks.clear()
+            if _shuffle:
+                track_id = random.choice(_folder_queue)
+            else:
+                _folder_queue_index = 0
+                track_id = _folder_queue[0]
+            track = db.query(Track).filter(Track.id == track_id).first()
+            if _vlc_available and track and os.path.exists(track.file_path):
+                media = _instance.media_new(track.file_path)
+                _media_player.set_media(media)
+                _media_player.play()
+            _current_track_id = track_id
+            return {"message": "Playing (repeat all)", "track_id": track_id, "queue_active": False}
+        return {"message": "End of all tracks", "track_id": _current_track_id, "queue_active": False}
 
 
 @router.post("/previous")
 def previous_track(db: Session = Depends(get_db)):
-    global _queue_index, _current_track_id, _queue
+    global _queue_index, _current_track_id, _queue, _queue_active, _folder_queue, _folder_queue_index, _played_folder_tracks
 
-    if not _queue:
-        tracks = db.query(Track).all()
-        _queue = [t.id for t in tracks]
-        _queue_index = 0
-
-    # Handle repeat: one - replay same track
     if _repeat == "one":
-        track_id = _current_track_id if _current_track_id else _queue[0]
+        track_id = _current_track_id if _current_track_id else _queue[0] if _queue else None
+        if track_id:
+            track = db.query(Track).filter(Track.id == track_id).first()
+            if _vlc_available and track and os.path.exists(track.file_path):
+                media = _instance.media_new(track.file_path)
+                _media_player.set_media(media)
+                _media_player.play()
+            _current_track_id = track_id
+        return {"message": "Playing (repeat one)", "track_id": track_id}
+
+    # Priority 1: Queue is active
+    if _queue_active and _queue and _queue_index > 0:
+        if _shuffle:
+            available = [t for t in _queue[:_queue_index] if t != _current_track_id]
+            if not available:
+                available = list(_queue)
+            track_id = random.choice(available)
+        else:
+            _queue_index -= 1
+            track_id = _queue[_queue_index]
+        
         track = db.query(Track).filter(Track.id == track_id).first()
         if _vlc_available and track and os.path.exists(track.file_path):
             media = _instance.media_new(track.file_path)
             _media_player.set_media(media)
             _media_player.play()
         _current_track_id = track_id
-        return {"message": "Playing (repeat one)", "track_id": track_id}
+        return {"message": "Playing previous from queue", "track_id": track_id, "queue_active": True}
 
-    # Handle shuffle - choose random
-    if _shuffle:
-        available_tracks = [t for t in _queue if t != _current_track_id]
-        if not available_tracks:
-            available_tracks = _queue
-        track_id = random.choice(available_tracks)
-        _queue_index = _queue.index(track_id)
+    # Fall back to folder
+    if not _folder_queue:
+        tracks = db.query(Track).all()
+        _folder_queue = [t.id for t in tracks]
+
+    # Previous in folder
+    if _folder_queue_index > 0:
+        _folder_queue_index -= 1
+    elif _repeat == "all":
+        _folder_queue_index = len(_folder_queue) - 1
     else:
-        # Normal previous - handle wrap
-        if _queue_index > 0:
-            _queue_index -= 1
-        elif _repeat == "all":
-            _queue_index = len(_queue) - 1  # Loop to end
-        else:
-            _queue_index = 0
-        track_id = _queue[_queue_index]
-
+        _folder_queue_index = 0
+    
+    track_id = _folder_queue[_folder_queue_index]
     track = db.query(Track).filter(Track.id == track_id).first()
-
     if _vlc_available and track and os.path.exists(track.file_path):
         media = _instance.media_new(track.file_path)
         _media_player.set_media(media)
         _media_player.play()
-
     _current_track_id = track_id
-    return {"message": "Playing previous", "track_id": track_id}
+    return {"message": "Playing previous from folder", "track_id": track_id, "queue_active": _queue_active}
 
 
 @router.post("/volume")
@@ -271,3 +417,12 @@ def set_volume(request: VolumeRequest):
             raise HTTPException(status_code=400, detail="Volume must be 0-100")
         _media_player.audio_set_volume(request.level)
     return {"message": "Volume set", "level": request.level}
+
+
+@router.post("/queue")
+def set_queue(request: QueueRequest):
+    global _queue, _queue_index, _queue_active
+    _queue = [t.get('id') for t in request.queue if t.get('id')]
+    _queue_index = 0
+    _queue_active = len(_queue) > 0
+    return {"message": "Queue updated", "queue_active": _queue_active, "queue_length": len(_queue)}

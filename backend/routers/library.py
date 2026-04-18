@@ -7,6 +7,7 @@ from typing import Optional, List
 from backend.db import SessionLocal
 from backend.models.folder import Folder
 from backend.models.track import Track
+from backend.models.recently_played import RecentlyPlayed
 from backend.schemas.folder import FolderCreate, FolderResponse
 from backend.schemas.track import TrackResponse
 
@@ -139,3 +140,17 @@ def get_tracks(
         query = query.filter(Track.album.ilike(f"%{album}%"))
 
     return query.all()
+
+
+@router.get("/recent", response_model=List[TrackResponse])
+def get_recent_tracks(db: Session = Depends(get_db)):
+    recent = (
+        db.query(RecentlyPlayed)
+        .order_by(RecentlyPlayed.played_at.desc())
+        .limit(20)
+        .all()
+    )
+    track_ids = [r.track_id for r in recent]
+    tracks = db.query(Track).filter(Track.id.in_(track_ids)).all()
+    track_map = {t.id: t for t in tracks}
+    return [track_map[tid] for tid in track_ids if tid in track_map]

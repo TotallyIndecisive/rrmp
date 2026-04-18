@@ -10,9 +10,15 @@ export const usePlayerStore = defineStore('player', {
     volume: 100,
     queue: [],
     queueIndex: -1,
+    queueActive: false,
     shuffle: false,
     repeat: 'off',
+    showQueue: false,
   }),
+
+  getters: {
+    queueActive: (state) => state.queueActive,
+  },
 
   actions: {
     setTrack(track) {
@@ -39,6 +45,7 @@ export const usePlayerStore = defineStore('player', {
       this.volume = status.volume
       this.shuffle = status.shuffle
       this.repeat = status.repeat
+      this.queueActive = status.queue_active
     },
 
     setQueue(queue, index = 0) {
@@ -103,8 +110,12 @@ export const usePlayerStore = defineStore('player', {
         const response = await playerApi.next()
         console.log('player.js: Next response:', response.data)
         if (response.data.track_id) {
-          this.queueIndex = Math.min(this.queueIndex + 1, this.queue.length - 1)
-          // Fetch the full track info and update currentTrack
+          if (response.data.queue_active) {
+            this.queueIndex = Math.min(this.queueIndex + 1, this.queue.length - 1)
+          } else {
+            this.queueIndex = -1
+          }
+          this.queueActive = response.data.queue_active
           const trackResponse = await library.getTracks()
           const track = trackResponse.data.find(t => t.id === response.data.track_id)
           if (track) {
@@ -123,8 +134,7 @@ export const usePlayerStore = defineStore('player', {
         const response = await playerApi.previous()
         console.log('player.js: Previous response:', response.data)
         if (response.data.track_id) {
-          this.queueIndex = Math.max(this.queueIndex - 1, 0)
-          // Fetch the full track info and update currentTrack
+          this.queueActive = response.data.queue_active
           const trackResponse = await library.getTracks()
           const track = trackResponse.data.find(t => t.id === response.data.track_id)
           if (track) {
@@ -170,6 +180,58 @@ export const usePlayerStore = defineStore('player', {
         this.repeat = response.data.repeat
       } catch (error) {
         console.error('Failed to cycle repeat:', error)
+      }
+    },
+
+    setShowQueue(value) {
+      this.showQueue = value
+    },
+
+    toggleQueue() {
+      this.showQueue = !this.showQueue
+    },
+
+    clearQueue() {
+      this.queue = []
+      this.queueIndex = -1
+      this.queueActive = false
+      this.syncQueueToBackend()
+    },
+
+    removeFromQueue(index) {
+      if (index < 0 || index >= this.queue.length) return
+      this.queue.splice(index, 1)
+      if (index < this.queueIndex) {
+        this.queueIndex--
+      } else if (index === this.queueIndex && this.queue.length > 0) {
+        this.queueIndex = Math.min(this.queueIndex, this.queue.length - 1)
+      } else if (this.queueIndex >= this.queue.length) {
+        this.queueIndex = this.queue.length - 1
+      }
+    },
+
+    async playFromQueue(index) {
+      if (index < 0 || index >= this.queue.length) return
+      const track = this.queue[index]
+      this.queueIndex = index
+      await this.playTrack(track)
+    },
+
+    addToQueue(track) {
+      const exists = this.queue.some(t => t.id === track.id)
+      if (exists) {
+        return { duplicate: true, title: track.title }
+      }
+      this.queue.push(track)
+      this.syncQueueToBackend()
+      return { duplicate: false, title: track.title }
+    },
+
+    async syncQueueToBackend() {
+      try {
+        await playerApi.setQueue(this.queue)
+      } catch (error) {
+        console.error('Failed to sync queue to backend:', error)
       }
     },
   },

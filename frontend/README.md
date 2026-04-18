@@ -87,6 +87,43 @@ src/
 
 ## Changelog
 
+### Queue Priority & Autoplay
+- Added queueActive state synced from backend GET /player/status
+- POST /player/queue endpoint syncs queue from frontend to backend
+- Priority: queue tracks first, then folder tracks, skipping already played
+- Currently playing track in amber, played tracks dimmed
+- "Queue finished — continuing from library" label when queue exhausted
+- Amber indicator dot on queue button when queue_active is true
+- Clear queue syncs empty array to backend
+
+### Queue Panel (Updated)
+- Removed drag-and-drop reordering
+- Add to Queue button on each track row in Library (list icon, same styling as Add to Playlist)
+- Clicking appends track to end of queue, newest at bottom
+- Duplicate detection: shows toast "{title} is already in the queue" if already in queue
+- Success toast: "Added to queue: {title}"
+- Queue displays tracks in order added (newest at bottom)
+- Currently playing track highlighted in amber
+- Per-track remove from queue button
+- Clear queue button
+- Scrollable list when many tracks
+
+### Queue Panel
+- Created Queue.vue component with ordered list of tracks
+- Currently playing track highlighted in amber
+- Drag-and-drop reordering using vuedraggable
+- Clear queue button to remove all tracks
+- Per-track remove from queue button
+- Toggle button in PlayerControls (list icon) shows/hides side drawer overlay
+- Wired to player store queue array
+
+### Recently Played
+- Added collapsible Recently Played section in Library panel below main track list
+- Fetches from GET /library/recent on expand, lazy-loaded
+- Displays last 20 tracks with title, artist, and duration
+- Clicking a track plays it same way as main library
+- Retro cassette theme styling consistent with rest of Library
+
 ### Keyboard Shortcuts
 - Global keyboard shortcut listeners on document
 - Space toggles play/pause

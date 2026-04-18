@@ -52,6 +52,14 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
               </button>
+              <button
+                @click.stop="addToQueue(track)"
+                class="btn-icon opacity-0 group-hover:opacity-100 text-retro-brown hover:text-retro-amber"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -85,6 +93,57 @@
         </button>
       </div>
     </div>
+
+    <div class="border-t border-retro-brown">
+      <button
+        @click="toggleRecent"
+        class="w-full p-3 flex items-center justify-between hover:bg-retro-amber hover:bg-opacity-20 transition-colors"
+      >
+        <h3 class="font-retro text-sm font-bold text-retro-brown">Recently Played</h3>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 text-retro-warm transition-transform"
+          :class="{ 'rotate-180': showRecent }"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <div v-if="showRecent" class="max-h-60 overflow-y-auto scrollbar-retro p-2 border-t border-retro-brown">
+        <div v-if="recentLoading" class="text-center py-4 text-retro-warm font-retro text-xs">
+          Loading...
+        </div>
+        <div v-else-if="recentTracks.length === 0" class="text-center py-4 text-retro-warm font-retro text-xs">
+          No recent tracks
+        </div>
+        <div v-else class="space-y-1">
+          <div
+            v-for="track in recentTracks"
+            :key="track.id"
+            class="track-item p-2 rounded cursor-pointer group"
+            :class="{ 'bg-retro-amber': isCurrentTrack(track) }"
+            @click="playTrack(track)"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex-1 min-w-0">
+                <p class="font-retro text-xs truncate" :class="isCurrentTrack(track) ? 'text-retro-dark' : 'text-retro-brown'">
+                  {{ track.title }}
+                </p>
+                <p class="font-retro text-xs truncate" :class="isCurrentTrack(track) ? 'text-retro-dark opacity-75' : 'text-retro-warm'">
+                  {{ track.artist || 'Unknown Artist' }}
+                </p>
+              </div>
+              <span class="font-retro text-xs" :class="isCurrentTrack(track) ? 'text-retro-dark' : 'text-retro-warm'">
+                {{ formatDuration(track.duration) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -92,7 +151,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useLibraryStore } from '../stores/library'
 import { usePlayerStore } from '../stores/player'
-import { playlists as playlistsApi } from '../services/api'
+import { playlists as playlistsApi, library } from '../services/api'
+import { toast } from '../utils/toast'
 import FolderManager from './FolderManager.vue'
 
 const libraryStore = useLibraryStore()
@@ -104,6 +164,9 @@ const showFolderManager = ref(false)
 const showPlaylistModal = ref(false)
 const selectedTrack = ref(null)
 const playlists = ref([])
+const showRecent = ref(false)
+const recentTracks = ref([])
+const recentLoading = ref(false)
 
 const filteredTracks = computed(() => {
   if (!searchQuery.value) return libraryStore.tracks
@@ -175,6 +238,30 @@ async function addToPlaylist(playlistId) {
     selectedTrack.value = null
   } catch (error) {
     console.error('Library.vue: Failed to add track to playlist:', error)
+  }
+}
+
+function addToQueue(track) {
+  const result = playerStore.addToQueue(track)
+  if (result.duplicate) {
+    toast(`${result.title} is already in the queue`, 'info', 2000)
+  } else {
+    toast(`Added to queue: ${result.title}`, 'success', 2000)
+  }
+}
+
+async function toggleRecent() {
+  showRecent.value = !showRecent.value
+  if (showRecent.value && recentTracks.value.length === 0) {
+    recentLoading.value = true
+    try {
+      const response = await library.getRecent()
+      recentTracks.value = response.data
+    } catch (error) {
+      console.error('Failed to fetch recent tracks:', error)
+    } finally {
+      recentLoading.value = false
+    }
   }
 }
 </script>

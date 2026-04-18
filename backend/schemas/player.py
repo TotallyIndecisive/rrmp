@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 
 class PlayerStatusResponse(BaseModel):
@@ -10,6 +10,7 @@ class PlayerStatusResponse(BaseModel):
     volume: int = 100
     shuffle: bool = False
     repeat: str = "off"
+    queue_active: bool = False
 
 
 class PlayRequest(BaseModel):
@@ -22,3 +23,7 @@ class SeekRequest(BaseModel):
 
 class VolumeRequest(BaseModel):
     level: int
+
+
+class QueueRequest(BaseModel):
+    queue: List[dict]

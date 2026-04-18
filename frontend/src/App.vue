@@ -19,6 +19,7 @@
     </main>
     
     <PlayerControls />
+    <Queue />
     <Toast ref="toastRef" />
   </div>
 </template>
@@ -32,6 +33,7 @@ import Library from './components/Library.vue'
 import NowPlaying from './components/NowPlaying.vue'
 import Playlist from './components/Playlist.vue'
 import PlayerControls from './components/PlayerControls.vue'
+import Queue from './components/Queue.vue'
 import Toast from './components/Toast.vue'
 
 const libraryStore = useLibraryStore()

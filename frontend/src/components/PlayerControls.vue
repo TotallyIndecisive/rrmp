@@ -74,6 +74,12 @@
               <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
             </svg>
           </button>
+          <button @click="toggleQueue" class="btn-icon text-retro-warm hover:text-retro-amber relative" :class="{ 'text-retro-amber': showQueue }">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+            <span v-if="queueActive" class="absolute -top-1 -right-1 w-2 h-2 bg-retro-amber rounded-full"></span>
+          </button>
         </div>
       </div>
     </div>
@@ -92,6 +98,8 @@ const isPlaying = ref(false)
 const volume = ref(100)
 const shuffle = ref(false)
 const repeat = ref('off')
+const showQueue = ref(false)
+const queueActive = ref(false)
 
 let pollInterval = null
 
@@ -107,6 +115,8 @@ onMounted(() => {
   volume.value = playerStore.volume
   shuffle.value = playerStore.shuffle
   repeat.value = playerStore.repeat
+  showQueue.value = playerStore.showQueue
+  queueActive.value = playerStore.queueActive
 
   pollInterval = setInterval(async () => {
     await playerStore.fetchStatus()
@@ -116,6 +126,8 @@ onMounted(() => {
     volume.value = playerStore.volume
     shuffle.value = playerStore.shuffle
     repeat.value = playerStore.repeat
+    showQueue.value = playerStore.showQueue
+    queueActive.value = playerStore.queueActive
   }, 1000)
 })
 
@@ -167,6 +179,10 @@ function toggleShuffle() {
 
 function cycleRepeat() {
   playerStore.cycleRepeat()
+}
+
+function toggleQueue() {
+  playerStore.toggleQueue()
 }
 </script>
 

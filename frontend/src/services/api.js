@@ -13,6 +13,7 @@ export const library = {
   deleteFolder: (id) => api.delete(`/library/folders/${id}`),
   scanLibrary: () => api.post('/library/scan'),
   getTracks: (params) => api.get('/library/tracks', { params }),
+  getRecent: () => api.get('/library/recent'),
 }
 
 export const player = {
@@ -27,6 +28,7 @@ export const player = {
   getStatus: () => api.get('/player/status'),
   toggleShuffle: () => api.post('/player/shuffle'),
   cycleRepeat: () => api.post('/player/repeat'),
+  setQueue: (queue) => api.post('/player/queue', { queue }),
 }
 
 export const playlists = {

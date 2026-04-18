@@ -30,6 +30,23 @@ A retro-themed media player for music collections.
 
 ## Changelog
 
+### Queue Priority & Autoplay
+- POST /player/queue syncs frontend queue to backend
+- queue_active state reflects whether queue has unplayed tracks
+- Priority order: queue tracks first, then folder tracks, skipping already played
+- Autoplay: VLC fires MediaPlayerEndReached, triggers next track automatically
+- Queue panel: played tracks dimmed, "Queue finished — continuing from library" label
+- Amber indicator on queue button when active
+
+### Queue Feature
+- Add to Queue button on each track row in Library (next to Add to Playlist)
+- Appends track to end of queue, newest at bottom
+- Duplicate detection with toast notification "{title} is already in the queue"
+- Success toast "Added to queue: {title}"
+- Queue panel: side drawer overlay, displays tracks in order added
+- Per-track remove from queue and clear queue buttons
+- Currently playing track highlighted in amber
+
 ### Stage 5 Fixes
 - Fix add track to playlist: confirmed backend schema and frontend payload match, API working correctly
 - Fix NowPlaying not updating on next/previous: player store now fetches full track info after next/previous calls and updates currentTrack reactively

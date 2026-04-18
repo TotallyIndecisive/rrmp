@@ -20,6 +20,7 @@
 - `DELETE /library/folders/{folder_id}` - Remove folder
 - `POST /library/scan` - Scan folders for audio files
 - `GET /library/tracks` - List tracks with optional search filters
+- `GET /library/recent` - Get 20 most recently played tracks
 
 ### Player (`/player`)
 - `POST /player/play` - Play track by ID
@@ -60,6 +61,20 @@
 - Run `uv run alembic revision --autogenerate -m "message"` to create new migration
 
 ## Changelog
+
+### Queue Priority & Autoplay
+- POST /player/queue endpoint accepts queue array and sets active queue
+- queue_active boolean added to GET /player/status response
+- Next/Previous priority: queue tracks first, then folder tracks
+- Skips already-played tracks in current session
+- Autoplay: VLC MediaPlayerEndReached event triggers next track logic
+- Repeat all behavior at end of all tracks
+- on_track_end callback handles autoplay logic
+
+### Recent Tracks
+- Added GET /library/recent endpoint returning 20 most recently played tracks
+- Joins RecentlyPlayed with Track to return full track details ordered by played_at descending
+- POST /player/play already inserts into RecentlyPlayed on every play (verified)
 
 ### Stage 5
 - Player router fixed: proper queue initialization for next/previous track navigation
