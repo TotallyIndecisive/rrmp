@@ -28,23 +28,26 @@
       <div class="cassette-screw bottom-left"></div>
       <div class="cassette-screw bottom-right"></div>
     </div>
-    <div v-else class="text-retro-warm font-retro text-lg">
+    <div v-else class="font-retro text-lg" :class="isDark ? 'text-retro-warm' : 'text-retro-warm'">
       No track playing
     </div>
     <div v-if="track" class="mt-6 text-center">
-      <h2 class="text-retro-cream font-retro text-xl font-bold">{{ track.title }}</h2>
-      <p class="text-retro-warm font-retro text-sm mt-1">{{ track.artist || 'Unknown Artist' }}</p>
-      <p class="text-retro-warm font-retro text-xs mt-1">{{ track.album || 'Unknown Album' }}</p>
+      <h2 class="font-retro text-xl font-bold" :class="isDark ? 'text-retro-cream' : 'text-retro-brown'">{{ track.title }}</h2>
+      <p class="font-retro text-sm mt-1" :class="isDark ? 'text-retro-warm' : 'text-retro-dark'">{{ track.artist || 'Unknown Artist' }}</p>
+      <p class="font-retro text-xs mt-1" :class="isDark ? 'text-retro-warm' : 'text-retro-dark'">{{ track.album || 'Unknown Album' }}</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { usePlayerStore } from '../stores/player'
+import { useThemeStore } from '../stores/theme'
 import { metadata } from '../services/api'
 
 const playerStore = usePlayerStore()
+const themeStore = useThemeStore()
+const isDark = computed(() => themeStore.isDark)
 const albumArt = ref(null)
 
 const track = ref(null)

@@ -1,8 +1,8 @@
 <template>
-  <div class="library bg-retro-cream h-full flex flex-col">
-    <div class="p-4 border-b border-retro-brown">
+  <div class="library h-full flex flex-col" :class="isDark ? 'bg-retro-cream' : 'bg-white'">
+    <div class="p-4 border-b" :class="isDark ? 'border-retro-brown' : 'border-retro-warm'">
       <div class="flex items-center gap-2 mb-3">
-        <h2 class="font-retro text-lg font-bold text-retro-brown flex-1">Library</h2>
+        <h2 class="font-retro text-lg font-bold flex-1" :class="isDark ? 'text-retro-brown' : 'text-retro-dark'">Library</h2>
         <button @click="showFolderManager = true" class="btn-retro text-xs">
           Folders
         </button>
@@ -151,12 +151,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { useLibraryStore } from '../stores/library'
 import { usePlayerStore } from '../stores/player'
+import { useThemeStore } from '../stores/theme'
 import { playlists as playlistsApi, library } from '../services/api'
 import { toast } from '../utils/toast'
 import FolderManager from './FolderManager.vue'
 
 const libraryStore = useLibraryStore()
 const playerStore = usePlayerStore()
+const themeStore = useThemeStore()
+const isDark = computed(() => themeStore.isDark)
 
 const searchQuery = ref('')
 const loading = ref(false)

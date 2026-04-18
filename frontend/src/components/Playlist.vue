@@ -1,8 +1,8 @@
 <template>
-  <div class="playlist-panel bg-retro-cream h-full flex flex-col">
-    <div class="p-4 border-b border-retro-brown">
+  <div class="playlist-panel h-full flex flex-col" :class="isDark ? 'bg-retro-cream' : 'bg-white'">
+    <div class="p-4 border-b" :class="isDark ? 'border-retro-brown' : 'border-retro-warm'">
       <div class="flex items-center gap-2 mb-3">
-        <h2 class="font-retro text-lg font-bold text-retro-brown flex-1">Playlists</h2>
+        <h2 class="font-retro text-lg font-bold flex-1" :class="isDark ? 'text-retro-brown' : 'text-retro-dark'">Playlists</h2>
         <button @click="createNewPlaylist" class="btn-retro text-xs">
           New
         </button>
@@ -104,14 +104,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { useLibraryStore } from '../stores/library'
 import { usePlayerStore } from '../stores/player'
+import { useThemeStore } from '../stores/theme'
 import { playlists as playlistsApi } from '../services/api'
 import draggable from 'vuedraggable'
 
 const libraryStore = useLibraryStore()
 const playerStore = usePlayerStore()
+const themeStore = useThemeStore()
+const isDark = computed(() => themeStore.isDark)
 
 const playlists = ref([])
 const playlistTracks = ref({})

@@ -87,6 +87,20 @@ src/
 
 ## Changelog
 
+### NowPlaying Fix
+- Fixed NowPlaying display missing after theme toggle implementation
+- Added missing imports: ref, watch, onMounted, metadata API to NowPlaying.vue
+- Added missing album art fetch logic with watch on currentTrack
+- NowPlaying cassette, reels, track info, and album art now display correctly
+
+### Dark/Light Theme Toggle
+- Added theme toggle button in header (sun/moon icon)
+- Created theme.js Pinia store with localStorage persistence
+- Updated tailwind.config.js with darkMode: 'class'
+- Updated App.vue, Library, Playlist, NowPlaying, PlayerControls with theme-aware classes
+- Dark: retro-dark background, retro-cream text, retro-amber accents
+- Light: retro-cream background, retro-brown text, retro-amber accents
+
 ### Reliable Autoplay (Backend)
 - VLC MediaPlayerEndReached event triggers autoplay via threading.Timer
 - Uses 0.5s delay to avoid VLC callback deadlock

@@ -1,14 +1,14 @@
 <template>
-  <div class="player-controls bg-retro-dark border-t-2 border-retro-brown px-6 py-4">
+  <div class="player-controls border-t-2 border-retro-amber px-6 py-4" :class="isDark ? 'bg-retro-dark' : 'bg-retro-warm'">
     <div class="max-w-6xl mx-auto">
       <div class="flex items-center gap-6">
         <div class="flex items-center gap-2">
-          <button @click="previous" class="btn-icon text-retro-warm hover:text-retro-amber">
+          <button @click="previous" class="btn-icon hover:text-retro-amber" :class="isDark ? 'text-retro-warm' : 'text-retro-cream'">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
             </svg>
           </button>
-          <button @click="togglePlay" class="btn-icon text-retro-amber hover:text-retro-cream">
+          <button @click="togglePlay" class="btn-icon hover:text-retro-cream" :class="isDark ? 'text-retro-amber' : 'text-retro-amber'">
             <svg v-if="!isPlaying" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z"/>
             </svg>
@@ -16,12 +16,12 @@
               <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
             </svg>
           </button>
-          <button @click="stop" class="btn-icon text-retro-warm hover:text-retro-amber">
+          <button @click="stop" class="btn-icon hover:text-retro-amber" :class="isDark ? 'text-retro-warm' : 'text-retro-cream'">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 6h12v12H6z"/>
             </svg>
           </button>
-          <button @click="next" class="btn-icon text-retro-warm hover:text-retro-amber">
+          <button @click="next" class="btn-icon hover:text-retro-amber" :class="isDark ? 'text-retro-warm' : 'text-retro-cream'">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
             </svg>
@@ -89,8 +89,11 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePlayerStore } from '../stores/player'
+import { useThemeStore } from '../stores/theme'
 
 const playerStore = usePlayerStore()
+const themeStore = useThemeStore()
+const isDark = computed(() => themeStore.isDark)
 
 const positionMs = ref(0)
 const durationMs = ref(0)
