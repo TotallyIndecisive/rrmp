@@ -31,6 +31,10 @@ export const player = {
   setQueue: (queue) => api.post('/player/queue', { queue }),
 }
 
+export const windowApi = {
+  resize: (width, height) => api.post(`/window/resize?width=${width}&height=${height}`),
+}
+
 export const playlists = {
   getAll: () => api.get('/playlists'),
   getOne: (id) => api.get(`/playlists/${id}`),

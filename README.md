@@ -30,6 +30,26 @@ A retro-themed media player for music collections.
 
 ## Changelog
 
+### Library Autoplay (Folder Tracks Only)
+- VLC MediaPlayerEndReached event triggers autoplay for folder tracks only
+- Uses threading.Timer(1.0, _play_next_library_track) to avoid deadlock
+- Skips entirely if queue_active is true (queue logic untouched)
+- Sequential folder playback, shuffle mode, repeat all behavior
+- Stops on last track if repeat is off
+
+### Reliable Autoplay
+- VLC MediaPlayerEndReached event triggers autoplay callback on track end
+- Uses threading.Timer(0.5, _play_next_track) to avoid VLC deadlock
+- _play_next_track() calls shared logic, works identically to POST /player/next
+- Works in normal mode (sequential), shuffle mode (random), and with queue
+
+### Mini Player Mode
+- Added toggle button in header to switch between full and mini view
+- Mini mode: hides Library and Playlist panels, NowPlaying scaled down to 50%
+- PlayerControls remains visible at bottom
+- POST /window/resize endpoint calls webview.windows[0].resize(width, height)
+- Mini mode resizes to 480x200, full mode restores 1280x800
+
 ### Shared Next Track Logic
 - Extracted next track priority logic into single `_get_next_track_id()` function
 - Both POST /player/next and on_track_end (autoplay) now call shared function

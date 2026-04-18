@@ -87,6 +87,19 @@ src/
 
 ## Changelog
 
+### Reliable Autoplay (Backend)
+- VLC MediaPlayerEndReached event triggers autoplay via threading.Timer
+- Uses 0.5s delay to avoid VLC callback deadlock
+- _play_next_track() mirrors POST /player/next logic exactly
+- Works in normal, shuffle, and queue modes
+
+### Mini Player Mode
+- Added toggle button (Mini/Full) in header to switch between views
+- Mini mode: hides Library and Playlist panels, NowPlaying scaled to 50%
+- PlayerControls remains visible at bottom
+- Calls POST /window/resize endpoint with 480x200 for mini, 1280x800 for full
+- Toast notifications confirm mode switch
+
 ### Shared Next Track Logic (Backend)
 - Extracted next track priority into single `_get_next_track_id()` function
 - Both POST /player/next and on_track_end call shared function

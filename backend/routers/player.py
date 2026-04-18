@@ -1,6 +1,7 @@
 import os
 import sys
 import random
+import threading
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -55,82 +56,67 @@ def get_db():
         db.close()
 
 
-def on_track_end(event, db=None):
-    global _current_track_id, _queue_index, _queue_active, _folder_queue_index, _played_folder_tracks
-    print("Track ended, determining next track...", file=sys.stderr)
+def _play_next_library_track():
+    global _current_track_id, _shuffle, _repeat, _queue_active, _played_folder_tracks
     
-    if db is None:
-        db = SessionLocal()
+    if _queue_active:
+        print("Queue active - skipping library autoplay", file=sys.stderr)
+        return
     
-    if _queue_active and _queue_index < len(_queue) - 1:
-        _queue_index += 1
-        track_id = _queue[_queue_index]
-    elif _queue_active and _queue_index >= len(_queue) - 1:
-        _queue_active = False
-        _queue_index = -1
-        _played_folder_tracks.add(_current_track_id)
+    print("Library autoplay: playing next folder track", file=sys.stderr)
+    
+    db = SessionLocal()
+    try:
+        if not _current_track_id:
+            return
         
-        if not _folder_queue:
-            tracks = db.query(Track).all()
-            _folder_queue = [t.id for t in tracks]
-            _folder_queue_index = _folder_queue.index(_current_track_id) if _current_track_id in _folder_queue else -1
+        tracks = db.query(Track).all()
+        track_ids = [t.id for t in tracks]
         
-        available = [t for t in _folder_queue if t not in _played_folder_tracks]
-        if available:
-            if _shuffle:
-                track_id = random.choice(available)
-            else:
-                current_pos = _folder_queue.index(_current_track_id) if _current_track_id in _folder_queue else -1
-                for t in _folder_queue[current_pos+1:]:
-                    if t not in _played_folder_tracks:
-                        track_id = t
-                        break
-                else:
-                    track_id = available[0]
-            _folder_queue_index = _folder_queue.index(track_id)
+        if not track_ids:
+            return
+        
+        if _shuffle:
+            available = [t for t in track_ids if t not in _played_folder_tracks]
+            if not available:
+                available = track_ids
+            track_id = random.choice(available)
         else:
-            if _repeat == "all":
-                _played_folder_tracks.clear()
-                _folder_queue_index = 0
-                track_id = _folder_queue[0]
+            try:
+                current_pos = track_ids.index(_current_track_id)
+            except ValueError:
+                current_pos = -1
+            
+            if current_pos < len(track_ids) - 1:
+                track_id = track_ids[current_pos + 1]
+            elif _repeat == "all":
+                track_id = track_ids[0]
             else:
+                print("Library autoplay: end of folder, stopping", file=sys.stderr)
+                if _media_player:
+                    _media_player.stop()
                 return
-    else:
-        _played_folder_tracks.add(_current_track_id)
         
-        if not _folder_queue:
-            tracks = db.query(Track).all()
-            _folder_queue = [t.id for t in tracks]
+        _played_folder_tracks.add(track_id)
         
-        available = [t for t in _folder_queue if t not in _played_folder_tracks]
-        if available:
-            if _shuffle:
-                track_id = random.choice(available)
-            else:
-                current_pos = _folder_queue.index(_current_track_id) if _current_track_id in _folder_queue else -1
-                for t in _folder_queue[current_pos+1:]:
-                    if t not in _played_folder_tracks:
-                        track_id = t
-                        break
-                else:
-                    track_id = available[0]
-            _folder_queue_index = _folder_queue.index(track_id)
-        else:
-            if _repeat == "all":
-                _played_folder_tracks.clear()
-                _folder_queue_index = 0
-                track_id = _folder_queue[0]
-            else:
-                return
-    
-    track = db.query(Track).filter(Track.id == track_id).first()
-    if track and _vlc_available and os.path.exists(track.file_path):
-        media = _instance.media_new(track.file_path)
-        _media_player.set_media(media)
-        _media_player.play()
-    
-    _current_track_id = track_id
-    print(f"Autoplay: {track_id}", file=sys.stderr)
+        track = db.query(Track).filter(Track.id == track_id).first()
+        if track and _vlc_available and os.path.exists(track.file_path):
+            media = _instance.media_new(track.file_path)
+            _media_player.set_media(media)
+            _media_player.play()
+        
+        print(f"Library autoplay: {track_id}", file=sys.stderr)
+    finally:
+        db.close()
+
+
+def on_track_end(event):
+    global _queue_active
+    if _queue_active:
+        print("Queue mode active - not triggering library autoplay", file=sys.stderr)
+        return
+    print("Track ended, triggering library autoplay...", file=sys.stderr)
+    threading.Timer(1.0, _play_next_library_track).start()
 
 
 # Attach autoplay event

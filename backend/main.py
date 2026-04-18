@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -36,6 +36,17 @@ app.include_router(metadata.router)
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+@app.post("/window/resize")
+def resize_window(width: int, height: int):
+    try:
+        import webview
+        if webview.windows:
+            webview.windows[0].resize(width, height)
+        return {"message": f"Resized to {width}x{height}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to resize window: {str(e)}")
 
 
 # Mount static files from the built frontend

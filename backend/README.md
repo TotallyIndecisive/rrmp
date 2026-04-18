@@ -62,6 +62,25 @@
 
 ## Changelog
 
+### Library Autoplay (Folder Tracks Only)
+- VLC MediaPlayerEndReached event triggers autoplay for folder tracks only
+- Uses threading.Timer(1.0, _play_next_library_track) to avoid deadlock
+- Skips autoplay entirely if queue_active is true (queue logic untouched)
+- Sequential folder playback: next track in list, loops on repeat all
+- Shuffle mode: random unplayed folder track, resets history when exhausted
+- Stops on last track if repeat is off
+
+### Reliable Autoplay
+- Attached listener to VLC MediaPlayerEndReached event
+- Uses threading.Timer(0.5, _play_next_track) to avoid deadlock
+- _play_next_track() uses same logic as POST /player/next endpoint
+- Works in normal, shuffle, and queue modes
+
+### Mini Player Mode
+- Added POST /window/resize endpoint accepting width and height query params
+- Calls webview.windows[0].resize(width, height) to resize native window
+- Used by frontend to switch between mini mode (480x200) and full mode (1280x800)
+
 ### Shared Next Track Logic
 - Extracted next track priority into single `_get_next_track_id()` function
 - Both POST /player/next and on_track_end (autoplay) call shared function
