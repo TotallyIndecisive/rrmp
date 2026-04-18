@@ -30,6 +30,35 @@ A retro-themed media player for music collections.
 
 ## Changelog
 
+### Panel Scrolling & Viewport Lock
+- Fixed player controls being pushed off screen when Library folders expand
+- Root layout: `height: 100vh`, `max-height: 100vh`, `overflow: hidden`, `display: flex`, `flex-direction: column`
+- Header: fixed 52px height with `flex-shrink: 0`
+- Main content: `flex: 1`, `min-height: 0` — critical for flex children not to overflow viewport
+- PlayerControls: fixed 80px height with `flex-shrink: 0`, always stays at bottom
+- Library panel: container `height: 100%`, `overflow: hidden`, header `flex-shrink: 0`, track list `flex: 1`, `min-height: 0`, `overflow-y: auto`
+- Playlist panel: same layout fix as Library
+- Queue panel: same layout fix, side drawer scrolls internally
+- NowPlaying: `height: 100%`, `overflow: hidden`, stays centered
+- Retro scrollbar styling: 6px width, amber (#F5A623) thumb, dark (#1C1009) track, hover brightens to #FFB84D
+
+### Playlist Management Fixes
+- Backend: Added debug logging to `POST /playlists/{playlist_id}/tracks` for troubleshooting
+- Backend: Added debug logging to `DELETE /playlists/{playlist_id}/tracks/{track_id}`
+- Frontend Library: Added console logs on add-to-playlist button click, improved error handling
+- Frontend Library: Added toast notification "Added to playlist: {playlist name}" on success
+- Frontend Library: Added error toast on failure, refreshes playlist list after add
+- Frontend Playlist: Track count badge now uses playlist.trackCount, updates on add/remove
+- Frontend Playlist: Fixed track display issue - added explicit `style="display: block; overflow: visible;"` to playlist-tracks container
+- Frontend Playlist: Fixed play button - now uses `setQueue(queueTracks, 0)` then `playTrack(firstTrack)` and syncs to backend
+- Frontend Playlist: Added console logs to playPlaylist and fetchPlaylistTracks for debugging
+- Frontend Playlist: Added duration display to each track row
+- Frontend Playlist: Added play button to each playlist (plays all tracks in order via queue)
+- Frontend Playlist: Added toast "Playing: {playlist name}" on play
+- Frontend Playlist: Added toast "Removed from playlist" on track removal
+- Frontend Playlist: Added toast "Playlist deleted" on playlist deletion
+- Added toast notifications for all playlist operations
+
 ### Library Autoplay (Folder Tracks Only)
 - VLC MediaPlayerEndReached event triggers autoplay for folder tracks only
 - Uses threading.Timer(1.0, _play_next_library_track) to avoid deadlock

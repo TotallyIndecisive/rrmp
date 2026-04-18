@@ -62,6 +62,11 @@
 
 ## Changelog
 
+### Playlist Management Fixes
+- Added debug logging to `POST /playlists/{playlist_id}/tracks` for troubleshooting
+- Added debug logging to `DELETE /playlists/{playlist_id}/tracks/{track_id}`
+- All playlist endpoints verified: create, list, get with tracks (joined with order), add track, remove track, reorder, delete
+
 ### Library Autoplay (Folder Tracks Only)
 - VLC MediaPlayerEndReached event triggers autoplay for folder tracks only
 - Uses threading.Timer(1.0, _play_next_library_track) to avoid deadlock

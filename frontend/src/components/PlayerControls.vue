@@ -28,6 +28,10 @@
           </button>
         </div>
 
+        <div class="flex items-center gap-1 h-8" :class="{ 'vu-meter': isPlaying }">
+          <div v-for="i in 5" :key="i" class="vu-bar w-1 rounded-full" :style="{ animationDelay: `${i * 0.1}s` }"></div>
+        </div>
+
         <div class="flex-1">
           <div class="flex items-center gap-4">
             <span class="font-retro text-xs text-retro-warm w-12">{{ formatTime(positionMs) }}</span>
@@ -224,5 +228,47 @@ function toggleQueue() {
   border-radius: 50%;
   cursor: pointer;
   border: none;
+}
+
+.vu-meter .vu-bar {
+  background: linear-gradient(to top, #F5A623 0%, #8D6E63 100%);
+  height: 100%;
+  animation: vu-bounce 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes vu-bounce {
+  0% { transform: scaleY(0.3); }
+  100% { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vu-meter .vu-bar {
+    animation: none;
+  }
+}
+
+.btn-icon {
+  transition: transform 0.15s ease, text-shadow 0.15s ease;
+}
+
+.btn-icon:hover {
+  transform: scale(1.1);
+  text-shadow: 0 0 8px #F5A623;
+}
+
+.btn-retro {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-retro:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(245, 166, 35, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-icon,
+  .btn-retro {
+    transition: none;
+  }
 }
 </style>

@@ -71,20 +71,56 @@ body {
 
 .scrollbar-retro {
   scrollbar-width: thin;
-  scrollbar-color: #8D6E63 #3E2723;
+  scrollbar-color: #F5A623 #1C1009;
 }
 
 .scrollbar-retro::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .scrollbar-retro::-webkit-scrollbar-track {
-  background: #3E2723;
+  background: #1C1009;
 }
 
 .scrollbar-retro::-webkit-scrollbar-thumb {
-  background: #8D6E63;
-  border-radius: 4px;
+  background: #F5A623;
+  border-radius: 3px;
+}
+
+.scrollbar-retro::-webkit-scrollbar-thumb:hover {
+  background: #FFB84D;
+}
+
+[data-scroll-area="library"]::-webkit-scrollbar,
+[data-scroll-area="playlist"]::-webkit-scrollbar,
+[data-scroll-area="queue"]::-webkit-scrollbar {
+  width: 6px;
+}
+
+[data-scroll-area="library"]::-webkit-scrollbar-track,
+[data-scroll-area="playlist"]::-webkit-scrollbar-track,
+[data-scroll-area="queue"]::-webkit-scrollbar-track {
+  background: #1C1009;
+}
+
+[data-scroll-area="library"]::-webkit-scrollbar-thumb,
+[data-scroll-area="playlist"]::-webkit-scrollbar-thumb,
+[data-scroll-area="queue"]::-webkit-scrollbar-thumb {
+  background: #F5A623;
+  border-radius: 3px;
+}
+
+[data-scroll-area="library"]::-webkit-scrollbar-thumb:hover,
+[data-scroll-area="playlist"]::-webkit-scrollbar-thumb:hover,
+[data-scroll-area="queue"]::-webkit-scrollbar-thumb:hover {
+  background: #FFB84D;
+}
+
+[data-scroll-area="library"],
+[data-scroll-area="playlist"],
+[data-scroll-area="queue"] {
+  scrollbar-width: thin;
+  scrollbar-color: #F5A623 #1C1009;
 }
 
 @keyframes spin {

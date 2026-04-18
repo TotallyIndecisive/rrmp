@@ -1,6 +1,6 @@
 <template>
-  <div class="app-container min-h-screen flex flex-col" :class="[isDark ? 'bg-retro-dark' : 'bg-retro-cream', { 'mini-mode': isMiniMode }]">
-    <header class="px-4 py-2 border-b-2 border-retro-amber flex items-center justify-between" :class="isDark ? 'bg-retro-brown' : 'bg-retro-warm'">
+  <div class="app-container" :class="[isDark ? 'bg-retro-dark' : 'bg-retro-cream', { 'mini-mode': isMiniMode }]" style="height: 100vh; max-height: 100vh; overflow: hidden; display: flex; flex-direction: column;">
+    <header class="px-4 py-3 border-b-2 border-retro-amber flex items-center justify-between flex-shrink-0" :class="isDark ? 'bg-retro-brown' : 'bg-retro-warm'" style="height: 52px; flex-shrink: 0;">
       <h1 class="font-retro text-lg font-bold tracking-wider" :class="isDark ? 'text-retro-cream' : 'text-retro-dark'">RETRO REEL MP</h1>
       <div class="flex items-center gap-2">
         <button @click="themeStore.toggle()" class="btn-retro text-xs flex items-center gap-1">
@@ -21,21 +21,21 @@
       </div>
     </header>
     
-    <main class="flex-1 flex overflow-hidden">
-      <aside v-if="!isMiniMode" class="w-72 flex-shrink-0 border-r-2" :class="isDark ? 'border-retro-brown bg-retro-dark' : 'border-retro-warm bg-retro-cream'">
+    <main class="flex-1 flex overflow-hidden min-h-0" style="flex: 1; min-height: 0; overflow: hidden;">
+      <aside v-if="!isMiniMode" class="w-72 flex-shrink-0 border-r-2" :class="isDark ? 'border-retro-brown bg-retro-dark' : 'border-retro-warm bg-retro-cream'" style="overflow: hidden;">
         <Library />
       </aside>
       
-      <section class="flex-1 flex items-center justify-center" :class="[isDark ? 'bg-retro-dark' : 'bg-retro-cream', { 'py-2': isMiniMode }]">
+      <section class="flex-1 flex items-center justify-center" :class="[isDark ? 'bg-retro-dark' : 'bg-retro-cream', { 'py-2': isMiniMode }]" style="overflow: hidden;">
         <NowPlaying :class="{ 'scale-50': isMiniMode }" />
       </section>
       
-      <aside v-if="!isMiniMode" class="w-72 flex-shrink-0 border-l-2" :class="isDark ? 'border-retro-brown bg-retro-dark' : 'border-retro-warm bg-retro-cream'">
+      <aside v-if="!isMiniMode" class="w-72 flex-shrink-0 border-l-2" :class="isDark ? 'border-retro-brown bg-retro-dark' : 'border-retro-warm bg-retro-cream'" style="overflow: hidden;">
         <Playlist />
       </aside>
     </main>
     
-    <PlayerControls :class="{ 'py-2': isMiniMode }" />
+    <PlayerControls class="flex-shrink-0" :class="{ 'py-2': isMiniMode }" style="height: 80px; flex-shrink: 0;" />
     <Queue />
     <Toast ref="toastRef" />
   </div>

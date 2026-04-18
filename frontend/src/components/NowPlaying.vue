@@ -1,41 +1,46 @@
 <template>
   <div class="flex flex-col items-center justify-center h-full p-8">
-    <div v-if="track" class="cassette">
-      <div class="cassette-body">
-        <div class="cassette-label">
-          <div v-if="albumArt" class="album-art">
-            <img :src="`data:image/jpeg;base64,${albumArt}`" alt="Album Art" />
+    <Transition name="fade" mode="out-in">
+      <div v-if="track" :key="track.id" class="cassette">
+        <div class="cassette-body">
+          <div class="cassette-grain"></div>
+          <div class="cassette-label">
+            <div v-if="albumArt" class="album-art">
+              <img :src="`data:image/jpeg;base64,${albumArt}`" alt="Album Art" />
+            </div>
+            <div v-else class="cassette-stripe"></div>
           </div>
-          <div v-else class="cassette-stripe"></div>
+          <div class="cassette-reels">
+            <div class="reel left" :class="{ spinning: isPlaying }">
+              <div class="reel-hole"></div>
+              <div class="reel-spoke"></div>
+              <div class="reel-spoke" style="transform: rotate(60deg)"></div>
+              <div class="reel-spoke" style="transform: rotate(120deg)"></div>
+            </div>
+            <div class="reel right" :class="{ spinning: isPlaying }">
+              <div class="reel-hole"></div>
+              <div class="reel-spoke"></div>
+              <div class="reel-spoke" style="transform: rotate(60deg)"></div>
+              <div class="reel-spoke" style="transform: rotate(120deg)"></div>
+            </div>
+          </div>
         </div>
-        <div class="cassette-reels">
-          <div class="reel left" :class="{ spinning: isPlaying }">
-            <div class="reel-hole"></div>
-            <div class="reel-spoke"></div>
-            <div class="reel-spoke" style="transform: rotate(60deg)"></div>
-            <div class="reel-spoke" style="transform: rotate(120deg)"></div>
-          </div>
-          <div class="reel right" :class="{ spinning: isPlaying }">
-            <div class="reel-hole"></div>
-            <div class="reel-spoke"></div>
-            <div class="reel-spoke" style="transform: rotate(60deg)"></div>
-            <div class="reel-spoke" style="transform: rotate(120deg)"></div>
-          </div>
-        </div>
+        <div class="cassette-screw top-left"></div>
+        <div class="cassette-screw top-right"></div>
+        <div class="cassette-screw bottom-left"></div>
+        <div class="cassette-screw bottom-right"></div>
       </div>
-      <div class="cassette-screw top-left"></div>
-      <div class="cassette-screw top-right"></div>
-      <div class="cassette-screw bottom-left"></div>
-      <div class="cassette-screw bottom-right"></div>
-    </div>
-    <div v-else class="font-retro text-lg" :class="isDark ? 'text-retro-warm' : 'text-retro-warm'">
-      No track playing
-    </div>
-    <div v-if="track" class="mt-6 text-center">
-      <h2 class="font-retro text-xl font-bold" :class="isDark ? 'text-retro-cream' : 'text-retro-brown'">{{ track.title }}</h2>
-      <p class="font-retro text-sm mt-1" :class="isDark ? 'text-retro-warm' : 'text-retro-dark'">{{ track.artist || 'Unknown Artist' }}</p>
-      <p class="font-retro text-xs mt-1" :class="isDark ? 'text-retro-warm' : 'text-retro-dark'">{{ track.album || 'Unknown Album' }}</p>
-    </div>
+      <div v-else class="font-retro text-lg" :class="isDark ? 'text-retro-warm' : 'text-retro-warm'">
+        No track playing
+      </div>
+    </Transition>
+    <Transition name="fade" mode="out-in">
+      <div v-if="track" :key="'info-' + track.id" class="mt-6 text-center">
+        <h2 class="font-retro text-xl font-bold" :class="isDark ? 'text-retro-cream' : 'text-retro-brown'">{{ track.title }}</h2>
+        <p class="font-retro text-sm mt-1" :class="isDark ? 'text-retro-warm' : 'text-retro-dark'">{{ track.artist || 'Unknown Artist' }}</p>
+        <p class="font-retro text-xs mt-1" :class="isDark ? 'text-retro-warm' : 'text-retro-dark'">{{ track.album || 'Unknown Album' }}</p>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -196,4 +201,41 @@ onMounted(() => {
 .cassette-screw.top-right { top: 8px; right: 8px; }
 .cassette-screw.bottom-left { bottom: 8px; left: 8px; }
 .cassette-screw.bottom-right { bottom: 8px; right: 8px; }
+
+.cassette-body {
+  position: relative;
+  overflow: hidden;
+}
+
+.cassette-grain::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.08;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.4s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-enter-active,
+  .fade-leave-active,
+  .reel.spinning {
+    transition: none;
+    animation: none;
+  }
+}
 </style>

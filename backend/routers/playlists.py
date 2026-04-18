@@ -95,12 +95,15 @@ def add_track_to_playlist(
     request: AddTrackToPlaylistRequest,
     db: Session = Depends(get_db),
 ):
+    print(f"[DEBUG] add_track_to_playlist called - playlist_id: {playlist_id}, track_id: {request.track_id}")
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id).first()
     if not playlist:
+        print(f"[DEBUG] Playlist not found: {playlist_id}")
         raise HTTPException(status_code=404, detail="Playlist not found")
 
     track = db.query(Track).filter(Track.id == request.track_id).first()
     if not track:
+        print(f"[DEBUG] Track not found: {request.track_id}")
         raise HTTPException(status_code=404, detail="Track not found")
 
     existing = (
@@ -112,6 +115,7 @@ def add_track_to_playlist(
         .first()
     )
     if existing:
+        print(f"[DEBUG] Track already in playlist: {request.track_id}")
         raise HTTPException(status_code=400, detail="Track already in playlist")
 
     max_order = (
@@ -126,6 +130,7 @@ def add_track_to_playlist(
     db.add(playlist_track)
     db.commit()
     db.refresh(playlist_track)
+    print(f"[DEBUG] Track added successfully - playlist_track_id: {playlist_track.id}, order: {playlist_track.order}")
     return {"message": "Track added", "id": playlist_track.id}
 
 
@@ -135,6 +140,7 @@ def remove_track_from_playlist(
     track_id: int,
     db: Session = Depends(get_db),
 ):
+    print(f"[DEBUG] remove_track_from_playlist called - playlist_id: {playlist_id}, track_id: {track_id}")
     playlist_track = (
         db.query(PlaylistTrack)
         .filter(
@@ -144,10 +150,12 @@ def remove_track_from_playlist(
         .first()
     )
     if not playlist_track:
+        print(f"[DEBUG] Track not in playlist: playlist_id={playlist_id}, track_id={track_id}")
         raise HTTPException(status_code=404, detail="Track not in playlist")
 
     db.delete(playlist_track)
     db.commit()
+    print(f"[DEBUG] Track removed successfully")
     return {"message": "Track removed"}
 
 

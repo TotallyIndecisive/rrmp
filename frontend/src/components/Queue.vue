@@ -1,8 +1,8 @@
 <template>
   <Transition name="slide">
     <div v-if="showQueue" class="fixed inset-0 z-50 flex justify-end" @click.self="closeQueue">
-      <div class="w-80 bg-retro-cream h-full border-l-2 border-retro-brown shadow-lg flex flex-col">
-        <div class="p-4 border-b border-retro-brown flex items-center justify-between">
+      <div class="w-80 bg-retro-cream h-full border-l-2 border-retro-brown shadow-lg flex flex-col" style="height: 100%; max-height: 100%; display: flex; flex-direction: column; overflow: hidden;">
+        <div class="p-4 border-b border-retro-brown flex items-center justify-between" style="flex-shrink: 0;">
           <h2 class="font-retro text-lg font-bold text-retro-brown">Queue</h2>
           <div class="flex items-center gap-2">
             <button
@@ -20,7 +20,7 @@
           </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto scrollbar-retro p-2">
+        <div class="flex-1 p-2" style="flex: 1; min-height: 0; overflow-y: auto;" data-scroll-area="queue">
           <div v-if="playerStore.queue.length === 0" class="text-center py-8 text-retro-warm font-retro text-sm">
             Queue is empty
           </div>
