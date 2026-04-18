@@ -30,6 +30,28 @@ A retro-themed media player for music collections.
 
 ## Changelog
 
+### Shared Next Track Logic
+- Extracted next track priority logic into single `_get_next_track_id()` function
+- Both POST /player/next and on_track_end (autoplay) now call shared function
+- Ensures identical behavior for manual next and autoplay
+- Added `_play_track()` helper for consistent track playback
+- on_track_end now properly transitions from queue to folder in shuffle mode
+
+### Shuffle Bug Fix & Queue Verification
+- Fixed shuffle repeating last two songs bug
+- Added `_played_folder_tracks` set to track all played folder tracks
+- Added `reset_played_tracks()` helper function to clear history
+- Reset played tracks on: manual track play, stop, clear queue
+- Every track added to played set before next random selection
+- When all folder tracks played, history resets for fresh shuffle
+- Verified all 7 queue scenarios work correctly
+
+### Shuffle Queue Fix
+- Shuffle mode now follows same queue priority rules as normal mode
+- Queue always plays sequentially in order — shuffle never applies to queue
+- Shuffle only applies to folder fallback after queue is exhausted
+- Fixed: POST /player/next, on_track_end, POST /player/previous all respect queue-first rule
+
 ### Queue Priority & Autoplay
 - POST /player/queue syncs frontend queue to backend
 - queue_active state reflects whether queue has unplayed tracks

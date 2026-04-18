@@ -87,6 +87,23 @@ src/
 
 ## Changelog
 
+### Shared Next Track Logic (Backend)
+- Extracted next track priority into single `_get_next_track_id()` function
+- Both POST /player/next and on_track_end call shared function
+- on_track_end now correctly transitions from queue to folder in shuffle mode
+- Autoplay follows same behavior as manual next button
+
+### Shuffle Bug Fix & Queue Verification
+- Fixed shuffle repeating last two songs bug
+- Backend tracks all played folder tracks in session
+- Reset played tracks on manual track select, stop, clear queue
+- All queue scenarios verified: add, playback order, autoplay, folder fallback, shuffle mode, clear mid-playback, manual track click
+
+### Shuffle Queue Fix
+- Shuffle mode now follows same queue priority rules as normal mode
+- Queue always plays sequentially in order — shuffle never applies to queue
+- Shuffle only applies to folder fallback after queue is exhausted
+
 ### Queue Priority & Autoplay
 - Added queueActive state synced from backend GET /player/status
 - POST /player/queue endpoint syncs queue from frontend to backend
